@@ -398,3 +398,131 @@ img { display: block; }
    Scrollable table wrapper (mobile)
 ───────────────────────────────────────────── */
 .table-wrap { overflow-x: auto; }
+
+/* ─────────────────────────────────────────────
+   Info banner (Elo page)
+───────────────────────────────────────────── */
+.info-banner {
+  background: rgba(56,189,248,.08);
+  border: 1px solid rgba(56,189,248,.25);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* ─────────────────────────────────────────────
+   FIFA ranking — changement de rang
+───────────────────────────────────────────── */
+.rank-chg {
+  font-size: .75rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px; display: inline-block; text-align: right;
+}
+.rank-chg.up   { color: var(--win); }
+.rank-chg.down { color: var(--loss); }
+.rank-chg.eq   { color: var(--muted); }
+
+/* ─────────────────────────────────────────────
+   Page Données
+───────────────────────────────────────────── */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+@media (max-width: 900px) { .data-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .data-grid { grid-template-columns: 1fr; } }
+
+.data-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.data-card-header {
+  display: flex; align-items: center; gap: 12px;
+}
+.data-icon { font-size: 1.4rem; flex-shrink: 0; }
+.data-label { font-weight: 700; font-size: .95rem; }
+.data-type-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 4px;
+  font-size: .68rem; font-weight: 700;
+  background: rgba(34,197,94,.15); color: var(--win);
+  margin-top: 2px;
+}
+.data-desc { color: var(--muted); font-size: .82rem; line-height: 1.6; flex: 1; }
+.data-filename {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: .75rem; color: var(--muted);
+  background: var(--surface2); padding: 3px 8px; border-radius: 4px;
+  display: inline-block;
+}
+.dl-btn {
+  margin-left: auto; flex-shrink: 0;
+  padding: 6px 14px; border-radius: 6px;
+  background: rgba(34,197,94,.15); color: var(--win);
+  font-size: .8rem; font-weight: 600;
+  border: 1px solid rgba(34,197,94,.3);
+  transition: all .15s; white-space: nowrap;
+  align-self: flex-start;
+}
+.dl-btn:hover { background: rgba(34,197,94,.25); color: var(--win); }
+
+.source-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+.source-section h3 {
+  font-size: .8rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .8px; margin-bottom: 12px;
+}
+.source-section ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.source-section li { font-size: .85rem; color: var(--muted); }
+.ext-link { color: var(--blue); text-decoration: underline; }
+.ext-link:hover { color: var(--text); }
+
+/* ─────────────────────────────────────────────
+   Footer
+───────────────────────────────────────────── */
+#footer {
+  background: #0a0f1e;
+  border-top: 1px solid var(--border);
+  padding: 24px 20px;
+  margin-top: 40px;
+}
+.footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.footer-links {
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.footer-link {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  flex: 1; min-width: 240px;
+  transition: border-color .15s;
+}
+.footer-link:hover { border-color: var(--accent); }
+.footer-link-icon {
+  font-size: 1.2rem; flex-shrink: 0;
+  color: var(--muted); margin-top: 2px;
+}
+.footer-link-title { font-weight: 600; font-size: .9rem; }
+.footer-link-desc  { color: var(--muted); font-size: .78rem; margin-top: 2px; line-height: 1.5; }
+.footer-credits {
+  font-size: .75rem; color: var(--muted);
+}
+.footer-credits a { color: var(--blue); text-decoration: underline; }
+.footer-credits a:hover { color: var(--text); }

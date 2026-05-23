@@ -26806,6 +26806,32 @@
     "first_shooter": null
   },
   {
+    "date": "2024-05-21",
+    "home_team": "Galicia",
+    "away_team": "Panama",
+    "home_score": "0",
+    "away_score": "2",
+    "tournament": "Friendly",
+    "city": "Vigo",
+    "country": "Spain",
+    "neutral": "FALSE",
+    "shootout": null,
+    "first_shooter": null
+  },
+  {
+    "date": "2024-05-21",
+    "home_team": "Basque Country",
+    "away_team": "Uruguay",
+    "home_score": "1",
+    "away_score": "1",
+    "tournament": "Friendly",
+    "city": "Bilbao",
+    "country": "Spain",
+    "neutral": "FALSE",
+    "shootout": null,
+    "first_shooter": null
+  },
+  {
     "date": "2024-05-31",
     "home_team": "Bolivia",
     "away_team": "Mexico",
@@ -47861,6 +47887,19 @@
     "tournament": "FIFA World Cup qualification",
     "city": "Astana",
     "country": "Kazakhstan",
+    "neutral": "FALSE",
+    "shootout": null,
+    "first_shooter": null
+  },
+  {
+    "date": "2025-11-15",
+    "home_team": "Basque Country",
+    "away_team": "Palestine",
+    "home_score": "3",
+    "away_score": "0",
+    "tournament": "Friendly",
+    "city": "Bilbao",
+    "country": "Spain",
     "neutral": "FALSE",
     "shootout": null,
     "first_shooter": null

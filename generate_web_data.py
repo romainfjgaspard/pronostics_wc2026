@@ -7,7 +7,7 @@ import csv, json, os, re, unicodedata
 from collections import defaultdict
 
 DATA_DIR    = "data"
-WEB_DATA    = os.path.join("web", "data")
+WEB_DATA    = "data"
 
 # ── ISO-2 codes ───────────────────────────────────────────────────────────────
 TEAM_ISO2 = {
@@ -72,12 +72,6 @@ def compute_elo(matches: list) -> dict:
         elo[h] += k * (sa - ea)
         elo[a] += k * ((1 - sa) - (1 - ea))
     return dict(elo)
-
-def predict(ea: float, eb: float) -> dict:
-    p = elo_exp(ea, eb)
-    diff = abs(ea - eb)
-    pd = max(0.12, 0.27 - diff / 2500.0)
-    return {'home': round(p*(1-pd)*100,1), 'draw': round(pd*100,1), 'away': round((1-p)*(1-pd)*100,1)}
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def load_csv(path):
@@ -236,13 +230,12 @@ def main():
     for f in wc26:
         h, a = f['home_team'], f['away_team']
         grp = t2g.get(h) or t2g.get(a) or '?'
-        prono = predict(elo.get(h,1500), elo.get(a,1500)) if f['_stage'] == 'group' else None
         fixtures_out.append({
             'date':f['date'], 'stage':f['_stage'], 'stage_label':STAGE_NAMES.get(f['_stage'],''),
             'group':grp, 'home':h, 'away':a,
             'home_iso2':TEAM_ISO2.get(h,''), 'away_iso2':TEAM_ISO2.get(a,''),
             'home_elo':round(elo.get(h,1500),0), 'away_elo':round(elo.get(a,1500),0),
-            'prono':prono, 'city':f.get('city',''),
+            'city':f.get('city',''),
         })
 
     # teams.json

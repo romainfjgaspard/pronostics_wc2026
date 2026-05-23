@@ -1,12 +1,12 @@
 /* =====================================================================
-   WC 2026 — Pronostics  |  app.js
-   SPA avec hash-routing  (#/ | #/team/{slug} | #/rankings)
+   WC 2026 — Données  |  app.js
+   SPA avec hash-routing  (#/ | #/team/{slug} | #/rankings | #/fifa-ranking | #/data)
 ===================================================================== */
 
 // ── State ────────────────────────────────────────────────────────────
 let DATA = null;  // { fixtures, teams, groups, rankings }
 let currentSlug = null;
-let sliderPeriod = 15;   // nb de matchs pour le slider
+let sliderPeriod = 15;
 
 // ── Init ─────────────────────────────────────────────────────────────
 async function init() {
@@ -34,10 +34,13 @@ function route() {
   setActiveNav(hash);
 
   if (hash.startsWith('/team/')) {
-    const slug = decodeURIComponent(hash.slice(6));
-    renderTeam(slug);
+    renderTeam(decodeURIComponent(hash.slice(6)));
   } else if (hash === '/rankings') {
     renderRankings();
+  } else if (hash === '/fifa-ranking') {
+    renderFifaRankings();
+  } else if (hash === '/data') {
+    renderData();
   } else {
     renderFixtures();
   }
@@ -45,9 +48,12 @@ function route() {
 
 function setActiveNav(hash) {
   document.querySelectorAll('.nav-link').forEach(a => {
+    const p = a.dataset.page;
     a.classList.toggle('active',
-      (hash === '/' || hash.startsWith('/team/')) && a.dataset.page === 'fixtures' ||
-      hash === '/rankings' && a.dataset.page === 'rankings'
+      ((hash === '/' || hash.startsWith('/team/')) && p === 'fixtures') ||
+      (hash === '/rankings'     && p === 'rankings') ||
+      (hash === '/fifa-ranking' && p === 'fifa-ranking') ||
+      (hash === '/data'         && p === 'data')
     );
   });
 }
@@ -65,20 +71,6 @@ function formatDate(d) {
   if (!d) return '';
   const dt = new Date(d + 'T00:00:00');
   return dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function pronoBars(prono) {
-  if (!prono) return '';
-  const { home: h, draw: dr, away: a } = prono;
-  return `
-    <div class="prono-bar">
-      <div class="prono-seg home" style="width:${h}%">${h >= 18 ? h + '%' : ''}</div>
-      <div class="prono-seg draw" style="width:${dr}%">${dr >= 12 ? dr + '%' : ''}</div>
-      <div class="prono-seg away" style="width:${a}%">${a >= 18 ? a + '%' : ''}</div>
-    </div>
-    <div class="prono-labels">
-      <span>${h}%</span><span>${dr}%</span><span>${a}%</span>
-    </div>`;
 }
 
 function resultBadge(r) {
@@ -105,7 +97,6 @@ function computeStatsFrom(matches) {
 function renderStatsGrid(s) {
   if (!s) return `<div class="no-data">Aucune donnée pour cette période</div>`;
   const gp = s.GP;
-  const wPct = gp ? ((s.W / gp) * 100).toFixed(0) : 0;
   const wBar = gp ? ((s.W / gp) * 100) : 0;
   const dBar = gp ? ((s.D / gp) * 100) : 0;
   const lBar = gp ? ((s.L / gp) * 100) : 0;
@@ -148,20 +139,17 @@ function renderStatsGrid(s) {
 function renderFixtures() {
   const app = document.getElementById('app');
 
-  // Group matches by group letter
   const byGroup = {};
   for (const f of DATA.fixtures) {
     if (!byGroup[f.group]) byGroup[f.group] = [];
     byGroup[f.group].push(f);
   }
 
-  // Build group cards HTML
   let groupsHtml = '';
   for (const letter of Object.keys(DATA.groups).sort()) {
-    const teams = DATA.groups[letter];
+    const teams   = DATA.groups[letter];
     const matches = (byGroup[letter] || []).sort((a, b) => a.date.localeCompare(b.date));
 
-    // Teams list
     const teamsHtml = teams.map(t => `
       <div class="group-team-row">
         <a href="#/team/${encodeURIComponent(t.slug)}">
@@ -171,31 +159,25 @@ function renderFixtures() {
         </a>
       </div>`).join('');
 
-    // Matches
-    const matchesHtml = matches.map(m => {
-      const homeWins = m.prono && m.prono.home >= m.prono.away;
-      const awayWins = m.prono && m.prono.away > m.prono.home;
-      return `
-        <div class="match-card">
-          <div class="match-date">📅 ${formatDate(m.date)}${m.city ? ' · ' + m.city : ''}</div>
-          <div class="match-teams">
-            <div class="match-team home">
-              <span style="${homeWins ? 'color:var(--text)' : 'color:var(--muted)'}">${m.home}</span>
-              <a href="#/team/${encodeURIComponent(slugify(m.home))}">
-                ${flagImg(m.home_iso2, m.home, 'flag-sm')}
-              </a>
-            </div>
-            <div class="match-vs">vs</div>
-            <div class="match-team away">
-              <a href="#/team/${encodeURIComponent(slugify(m.away))}">
-                ${flagImg(m.away_iso2, m.away, 'flag-sm')}
-              </a>
-              <span style="${awayWins ? 'color:var(--text)' : 'color:var(--muted)'}">${m.away}</span>
-            </div>
+    const matchesHtml = matches.map(m => `
+      <div class="match-card">
+        <div class="match-date">${formatDate(m.date)}${m.city ? ' · ' + m.city : ''}</div>
+        <div class="match-teams">
+          <div class="match-team home">
+            <span>${m.home}</span>
+            <a href="#/team/${encodeURIComponent(slugify(m.home))}">
+              ${flagImg(m.home_iso2, m.home, 'flag-sm')}
+            </a>
           </div>
-          ${pronoBars(m.prono)}
-        </div>`;
-    }).join('<hr style="border:none;border-top:1px solid var(--border);margin:4px 0">');
+          <div class="match-vs">vs</div>
+          <div class="match-team away">
+            <a href="#/team/${encodeURIComponent(slugify(m.away))}">
+              ${flagImg(m.away_iso2, m.away, 'flag-sm')}
+            </a>
+            <span>${m.away}</span>
+          </div>
+        </div>
+      </div>`).join('<hr style="border:none;border-top:1px solid var(--border);margin:4px 0">');
 
     groupsHtml += `
       <div class="group-card">
@@ -207,48 +189,16 @@ function renderFixtures() {
 
   app.innerHTML = `
     <div class="page-header">
-      <h1>⚽ Coupe du Monde 2026</h1>
-      <p>Canada · États-Unis · Mexique &nbsp;|&nbsp; Juin – Juillet 2026</p>
+      <h1>Coupe du Monde 2026</h1>
+      <p>Canada · États-Unis · Mexique &nbsp;|&nbsp; Juin – Juillet 2026 &nbsp;|&nbsp; 48 équipes · 12 groupes</p>
     </div>
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab="groups">Phases de groupes</button>
-      <button class="tab-btn"       data-tab="info">À propos du prono</button>
-    </div>
-    <div id="tab-content">
-      <div id="tab-groups" class="groups-grid">${groupsHtml}</div>
-      <div id="tab-info" style="display:none">
-        <div class="stat-card" style="max-width:600px;padding:24px;line-height:1.8">
-          <h2 style="margin-bottom:12px">📊 Méthode de pronostic</h2>
-          <p>Les probabilités sont calculées par un <strong>système Elo</strong> basé sur 
-          <strong>${DATA.fixtures.length ? DATA.fixtures.length : ''}+ matchs</strong> 
-          internationaux depuis janvier 2022 (WC 2022, Euro 2024, Copa América 2024, CAN, 
-          qualifications, matchs amicaux…).</p>
-          <br>
-          <ul style="padding-left:20px;color:var(--muted)">
-            <li>K-factor × 60 pour WC, × 50 pour tournois continentaux</li>
-            <li>K-factor × 35 pour qualifications</li>
-            <li>Avantage terrain de +75 Elo points (neutralisé pour le WC)</li>
-            <li>Probabilité de nul : max(12%, 27% − |ΔElo| / 2500)</li>
-          </ul>
-        </div>
-      </div>
-    </div>`;
-
-  // Tab switching
-  app.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      app.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('tab-groups').style.display = btn.dataset.tab === 'groups' ? 'grid' : 'none';
-      document.getElementById('tab-info').style.display   = btn.dataset.tab === 'info'   ? 'block' : 'none';
-    });
-  });
+    <div class="groups-grid">${groupsHtml}</div>`;
 }
 
 // ── VIEW: Team ────────────────────────────────────────────────────────
 function renderTeam(slug) {
-  const app   = document.getElementById('app');
-  const team  = DATA.teams[slug];
+  const app  = document.getElementById('app');
+  const team = DATA.teams[slug];
 
   if (!team) {
     app.innerHTML = `<a href="#/" class="back-btn">← Retour</a>
@@ -258,7 +208,6 @@ function renderTeam(slug) {
 
   currentSlug = slug;
 
-  // Build HTML
   app.innerHTML = `
     <a href="#/" class="back-btn">← Retour aux matchs</a>
 
@@ -304,28 +253,21 @@ function renderTeam(slug) {
       </div>
     </div>`;
 
-  // Initial stats render
   updateStats(team, 'all');
 
-  // Period button handlers
   app.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const period = btn.dataset.period;
-      if (period === 'all' || period === '2025' || period === '2026' || period === 'qualifs') {
-        updateStats(team, period);
-      }
+      updateStats(team, btn.dataset.period);
     });
   });
 
-  // Slider handler (live computation)
   const slider = app.querySelector('#period-slider');
   if (slider) {
     slider.addEventListener('input', () => {
       sliderPeriod = parseInt(slider.value);
       document.getElementById('slider-count').textContent = sliderPeriod;
-      // Deactivate preset buttons
       app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
       const stats = computeStatsFrom((team.matches || []).slice(0, sliderPeriod));
       document.getElementById('stats-display').innerHTML = renderStatsGrid(stats);
@@ -334,10 +276,10 @@ function renderTeam(slug) {
 }
 
 function updateStats(team, period) {
-  const stats = period === 'all'    ? team.stats.all
-              : period === '2025'   ? team.stats['2025']
-              : period === '2026'   ? team.stats['2026']
-              : period === 'qualifs'? team.stats.qualifs
+  const stats = period === 'all'     ? team.stats.all
+              : period === '2025'    ? team.stats['2025']
+              : period === '2026'    ? team.stats['2026']
+              : period === 'qualifs' ? team.stats.qualifs
               : null;
   document.getElementById('stats-display').innerHTML = renderStatsGrid(stats);
 }
@@ -346,7 +288,7 @@ function buildMatchesTable(matches) {
   if (!matches.length) return '<div class="no-data">Aucun résultat disponible</div>';
 
   const rows = matches.map(m => {
-    const loc = m.home ? '<span class="home-tag">DOM</span>' : '';
+    const loc   = m.home ? '<span class="home-tag">DOM</span>' : '';
     const score = `${m.scored} – ${m.conceded}`;
     return `<tr>
       <td>${formatDate(m.date)}</td>
@@ -368,7 +310,7 @@ function buildMatchesTable(matches) {
   </table>`;
 }
 
-// ── VIEW: Rankings ────────────────────────────────────────────────────
+// ── VIEW: Classement Elo (48 équipes WC) ─────────────────────────────
 function renderRankings() {
   const app = document.getElementById('app');
   const maxElo = DATA.rankings[0]?.elo || 1800;
@@ -392,23 +334,175 @@ function renderRankings() {
 
   app.innerHTML = `
     <div class="page-header">
-      <h1>Classement Elo WC 2026</h1>
-      <p>48 équipes qualifiées · Basé sur les matchs depuis janv. 2022</p>
+      <h1>Classement Elo — 48 équipes</h1>
+      <p>Score de forme calculé sur les matchs internationaux depuis janvier 2022</p>
+    </div>
+    <div class="info-banner">
+      L'Elo est un indicateur de niveau basé sur les résultats récents (WC 2022, Euro 2024,
+      Copa América 2024, qualifications, matchs amicaux…). Il reflète la forme des équipes
+      sur la période, pas un pronostic de victoire.
     </div>
     <div class="table-wrap">
       <table class="rankings-table">
         <thead><tr>
-          <th>#</th><th></th><th>Équipe</th><th>Groupe</th><th>Elo</th>
+          <th>#</th><th></th><th>Équipe</th><th>Groupe</th><th>Score Elo</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
 }
 
-// ── Utility: slugify (mirror of Python's slugify) ────────────────────
+// ── VIEW: Classement FIFA ─────────────────────────────────────────────
+async function renderFifaRankings() {
+  const app = document.getElementById('app');
+  app.innerHTML = `<div class="splash"><div class="spinner"></div><p>Chargement classement FIFA…</p></div>`;
+
+  let data;
+  try {
+    data = await fetch('./data/fifa_ranking.json').then(r => r.json());
+  } catch (e) {
+    app.innerHTML = `
+      <div class="page-header"><h1>Classement FIFA</h1></div>
+      <div class="no-data">
+        Données non disponibles.<br>
+        Lancez <code>python fetch_fifa_ranking.py</code> pour les générer.
+      </div>`;
+    return;
+  }
+
+  const rankings = data.rankings || [];
+  const maxPts   = rankings[0]?.points || 1900;
+  const dateStr  = data.ranking_date || data.updated_at?.slice(0, 10) || '—';
+
+  const rows = rankings.map((t, i) => {
+    const barW   = Math.round((t.points / maxPts) * 160);
+    const rankCls = i < 3 ? `rank-${i + 1}` : '';
+    const chg    = t.change;
+    const chgHtml = chg > 0
+      ? `<span class="rank-chg up">▲${chg}</span>`
+      : chg < 0
+        ? `<span class="rank-chg down">▼${Math.abs(chg)}</span>`
+        : `<span class="rank-chg eq">—</span>`;
+    const teamSlug = slugify(t.name);
+    const hasTeam  = DATA.teams && DATA.teams[teamSlug];
+    const nameHtml = hasTeam
+      ? `<a href="#/team/${encodeURIComponent(teamSlug)}">${t.name}</a>`
+      : t.name;
+
+    return `<tr class="${rankCls}">
+      <td class="rank-num">${t.rank}</td>
+      <td>${chgHtml}</td>
+      <td>${flagImg(t.iso2, t.name, 'flag-sm')}</td>
+      <td>${nameHtml}</td>
+      <td style="color:var(--muted);font-size:.8rem">${t.confederation}</td>
+      <td>
+        <div class="elo-bar-wrap">
+          <div class="elo-bar" style="width:${barW}px;max-width:160px;background:var(--blue)"></div>
+          <span class="elo-num">${t.points.toFixed(2)}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="page-header">
+      <h1>Classement FIFA Masculin</h1>
+      <p>${rankings.length} sélections · Mise à jour : ${dateStr} · Source : ${data.source || 'FIFA'}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="rankings-table">
+        <thead><tr>
+          <th>#</th><th></th><th></th><th>Équipe</th><th>Confédération</th><th>Points FIFA</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── VIEW: Données ─────────────────────────────────────────────────────
+function renderData() {
+  const app = document.getElementById('app');
+
+  const datasets = [
+    {
+      file: 'fixtures.json',
+      label: 'Matchs WC 2026',
+      desc: '72 matchs de phase de groupes : dates, villes, équipes, score Elo.',
+      icon: '📅',
+      type: 'JSON',
+    },
+    {
+      file: 'teams.json',
+      label: 'Fiches équipes',
+      desc: '48 équipes qualifiées : stats par période (depuis 2022, 2025, 2026, qualifs), 30 derniers matchs, score Elo.',
+      icon: '🏳️',
+      type: 'JSON',
+    },
+    {
+      file: 'groups.json',
+      label: 'Groupes',
+      desc: '12 groupes avec la composition et le score Elo de chaque équipe.',
+      icon: '📋',
+      type: 'JSON',
+    },
+    {
+      file: 'rankings.json',
+      label: 'Classement Elo',
+      desc: '48 équipes classées par score Elo (indicateur de forme, basé sur les résultats depuis 2022).',
+      icon: '📊',
+      type: 'JSON',
+    },
+    {
+      file: 'fifa_ranking.json',
+      label: 'Classement FIFA',
+      desc: 'Classement FIFA officiel (211 sélections) avec points et confederation.',
+      icon: '🏆',
+      type: 'JSON',
+    },
+    {
+      file: 'results.csv',
+      label: 'Résultats historiques',
+      desc: 'Tous les matchs internationaux depuis janvier 2022 (WC 2022, Euro 2024, Copa América, CAN, qualifications, amicaux…).',
+      icon: '📰',
+      type: 'CSV',
+    },
+  ];
+
+  const cards = datasets.map(d => `
+    <div class="data-card">
+      <div class="data-card-header">
+        <span class="data-icon">${d.icon}</span>
+        <div>
+          <div class="data-label">${d.label}</div>
+          <span class="data-type-badge">${d.type}</span>
+        </div>
+        <a class="dl-btn" href="./data/${d.file}" download="${d.file}">Télécharger</a>
+      </div>
+      <p class="data-desc">${d.desc}</p>
+      <code class="data-filename">data/${d.file}</code>
+    </div>`).join('');
+
+  app.innerHTML = `
+    <div class="page-header">
+      <h1>Données</h1>
+      <p>Tous les fichiers sont au format ouvert (JSON / CSV) — libres de réutilisation.</p>
+    </div>
+
+    <div class="data-grid">${cards}</div>
+
+    <div class="source-section">
+      <h3>Sources</h3>
+      <ul>
+        <li>Résultats historiques : <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a> (CC0)</li>
+        <li>Classement FIFA : <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a> via API / <a href="https://github.com/cnc8/fifa-world-ranking" target="_blank" class="ext-link">cnc8/fifa-world-ranking</a> (fallback)</li>
+        <li>Score Elo : calcul maison sur K-facteurs WC×60, tournois×50, qualifs×35, amicaux×20</li>
+      </ul>
+    </div>`;
+}
+
+// ── Utility: slugify ─────────────────────────────────────────────────
 function slugify(name) {
-  // Normalize accents
-  const s = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  const s = name.normalize('NFKD').replace(/[̀-ͯ]/g, '');
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
