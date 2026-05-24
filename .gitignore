@@ -25,3 +25,8 @@ Thumbs.db
 
 # Local only
 AGENTS-STATUS.md
+
+# Gros fichiers générés — téléchargeables localement mais trop lourds pour le repo
+data/matches_enriched.json
+data/stats_teams.json
+data/stats_tournaments.json

@@ -1,6 +1,7 @@
 """
 Récupération des données football pour le concours de pronostics WC 2026
 Source principale : https://github.com/martj42/international_results (CC0)
+Toutes les données depuis 1872 — aucun filtre de date ou de compétition.
 """
 
 import csv
@@ -8,7 +9,6 @@ import io
 import json
 import os
 import urllib.request
-from datetime import datetime
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
@@ -20,25 +20,6 @@ FILES = {
     "goalscorers": f"{BASE_URL}/goalscorers.csv",
 }
 
-# Compétitions à conserver (filtre sur la colonne "tournament")
-# On inclut tout ce qui touche aux équipes nationales depuis la WC 2022
-TOURNAMENT_KEYWORDS = [
-    "FIFA World Cup",           # WC 2022 + qualifs WC 2026 (toutes zones)
-    "UEFA Euro",                # Euro 2024 + qualifs
-    "Copa América",             # Copa 2024
-    "African Cup of Nations",   # CAN (le nom exact dans le dataset)
-    "AFC Asian Cup",            # Coupe d'Asie 2023 + qualifs
-    "Gold Cup",                 # CONCACAF Gold Cup 2023
-    "CONCACAF Nations League",  # Nations League CONCACAF
-    "Friendly",                 # matchs amicaux
-    "Nations League",           # UEFA / CONCACAF / etc.
-    "Oceania Nations Cup",      # OFC
-    "CONMEBOL",                 # Copa du monde (Coupe des champions CONMEBOL-UEFA)
-]
-
-# Date de début : tout depuis le 1er janvier 2022 pour avoir WC 2022
-DATE_START = "2022-01-01"
-
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -46,23 +27,11 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "data")
 def download_csv(url: str) -> list[dict]:
     """Télécharge un CSV depuis une URL et retourne une liste de dicts."""
     print(f"  Téléchargement : {url}")
-    with urllib.request.urlopen(url, timeout=30) as resp:
+    with urllib.request.urlopen(url, timeout=120) as resp:
         content = resp.read().decode("utf-8")
     reader = csv.DictReader(io.StringIO(content))
     return list(reader)
 
-
-def match_tournament(tournament: str) -> bool:
-    t = tournament.lower()
-    return any(kw.lower() in t for kw in TOURNAMENT_KEYWORDS)
-
-
-def filter_results(rows: list[dict]) -> list[dict]:
-    """Garde les matchs depuis DATE_START et dans les compétitions cibles."""
-    return [
-        r for r in rows
-        if r["date"] >= DATE_START and match_tournament(r["tournament"])
-    ]
 
 
 def save_csv(rows: list[dict], path: str):
@@ -186,21 +155,11 @@ def main():
           f"{len(raw_shootouts)} tirs au but, "
           f"{len(raw_goalscorers)} buteurs")
 
-    # 2. Filtrage
-    print(f"\n[2/4] Filtrage (depuis {DATE_START}, tournois cibles)...")
-    results     = filter_results(raw_results)
-    # shootouts : on filtre seulement sur la date pour garder cohérence
-    shootouts   = [s for s in raw_shootouts if s["date"] >= DATE_START]
-    goalscorers = [g for g in raw_goalscorers if g["date"] >= DATE_START
-                   and match_tournament(
-                       next((r["tournament"] for r in results
-                             if r["date"] == g["date"]
-                             and r["home_team"] == g["home_team"]
-                             and r["away_team"] == g["away_team"]), "")
-                   )]
-    print(f"  Filtré : {len(results)} résultats, "
-          f"{len(shootouts)} tirs au but, "
-          f"{len(goalscorers)} buteurs")
+    # 2. Aucun filtre — on garde tout (depuis 1872)
+    print("\n[2/4] Aucun filtrage (historique complet depuis 1872)...")
+    results     = raw_results
+    shootouts   = raw_shootouts
+    goalscorers = raw_goalscorers
 
     # 3. Enrichissement
     print("\n[3/4] Enrichissement et calcul des stats...")

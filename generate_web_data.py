@@ -213,7 +213,7 @@ def main():
     for letter in sorted(groups_map):
         print(f"    Groupe {letter}: {', '.join(groups_map[letter])}")
 
-    print("\n[4/5] Calcul Elo (depuis 2022)...")
+    print("\n[4/5] Calcul Elo (historique complet)...")
     elo = compute_elo(history)
     wc_teams = set(t2g.keys())
 
@@ -242,7 +242,7 @@ def main():
     teams_out = {}
     for team in sorted(wc_teams):
         slug = slugify(team)
-        recent = team_recent(history, team, limit=30)
+        recent = team_recent(history, team, limit=50)
 
         s_l10 = None
         if recent:
@@ -261,12 +261,13 @@ def main():
             'group':t2g.get(team,'?'), 'iso2':TEAM_ISO2.get(team,''),
             'elo':round(elo.get(team,1500),0),
             'stats':{
-                'all':    team_stats(history, team, since='2022-01-01'),
-                '2026':   team_stats(history, team, since='2026-01-01'),
-                '2025':   team_stats(history, team, since='2025-01-01', until='2025-12-31'),
-                '2024':   team_stats(history, team, since='2024-01-01', until='2024-12-31'),
-                'last10': s_l10,
-                'qualifs':team_stats(history, team, since='2023-01-01', tourney='World Cup qualification'),
+                'all':      team_stats(history, team, since='2022-01-01'),
+                '2026':     team_stats(history, team, since='2026-01-01'),
+                '2025':     team_stats(history, team, since='2025-01-01', until='2025-12-31'),
+                '2024':     team_stats(history, team, since='2024-01-01', until='2024-12-31'),
+                'last10':   s_l10,
+                'qualifs':  team_stats(history, team, since='2023-01-01', tourney='World Cup qualification'),
+                'all_time': team_stats(history, team),
             },
             'matches': recent,
         }

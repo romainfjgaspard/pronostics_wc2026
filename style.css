@@ -469,7 +469,7 @@ img { display: block; }
 .elo-note {
   margin-top: 12px;
   font-size: .78rem;
-  color: var(--border);
+  color: var(--muted);
   font-style: italic;
   line-height: 1.5;
   border-top: 1px solid var(--border);

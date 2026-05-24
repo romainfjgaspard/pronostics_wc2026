@@ -18,6 +18,7 @@ const I18N = {
     team_not_found: (s) => `Équipe introuvable : <strong>${s}</strong>`,
     team_not_found_short: 'Équipe introuvable',
     period_all: 'Depuis 2022',
+    period_all_time: 'Historique',
     period_qualifs: 'Qualifs CDM',
     period_title: "Période d'analyse",
     slider_label: (n) => `Derniers <strong>${n}</strong> matchs`,
@@ -48,12 +49,12 @@ const I18N = {
     cmp_row_gf: 'Buts marqués',     cmp_row_ga: 'Buts encaissés',
     cmp_row_gd: 'Différence buts',  cmp_row_elo: 'Score Elo',
     cmp_stat_col: 'Statistique',
-    h2h_title: (n) => `Confrontations directes (depuis 2022) — ${n} match${n !== 1 ? 's' : ''}`,
-    no_h2h: 'Aucune confrontation directe trouvée depuis 2022',
+    h2h_title: (n) => `Confrontations directes — ${n} match${n !== 1 ? 's' : ''}`,
+    no_h2h: 'Aucune confrontation directe trouvée',
     form_of: (name) => `Forme récente — ${name}`,
     elo_h1: 'Classement Elo — 48 équipes',
-    elo_sub: 'Score de forme calculé sur les matchs internationaux depuis janvier 2022',
-    elo_info: "L'Elo est un indicateur de niveau basé sur les résultats récents (WC 2022, Euro 2024, Copa América 2024, qualifications, matchs amicaux…). Il reflète la forme des équipes sur la période, pas un pronostic de victoire.",
+    elo_sub: 'Score de forme calculé sur l\'historique complet des matchs internationaux (depuis 1872)',
+    elo_info: "L'Elo est un indicateur de niveau calculé sur l'ensemble de l'histoire du football international (depuis 1872). Il intègre WC 2022, Euro 2024, Copa América 2024, qualifications, matchs amicaux et bien plus. Il reflète la valeur globale des équipes, pas uniquement leur forme récente.",
     th_team: 'Équipe',    th_group: 'Groupe',  th_elo_score: 'Score Elo',
     fifa_h1: 'Classement FIFA Masculin',
     fifa_sub: (count, date, source) => `${count} sélections · Mise à jour : ${date} · Source : ${source}`,
@@ -81,6 +82,7 @@ const I18N = {
     team_not_found: (s) => `Team not found: <strong>${s}</strong>`,
     team_not_found_short: 'Team not found',
     period_all: 'Since 2022',
+    period_all_time: 'All time',
     period_qualifs: 'WC Qualifiers',
     period_title: 'Analysis period',
     slider_label: (n) => `Last <strong>${n}</strong> matches`,
@@ -111,12 +113,12 @@ const I18N = {
     cmp_row_gf: 'Goals scored',      cmp_row_ga: 'Goals conceded',
     cmp_row_gd: 'Goal difference',   cmp_row_elo: 'Elo score',
     cmp_stat_col: 'Stat',
-    h2h_title: (n) => `Head-to-head (since 2022) — ${n} match${n !== 1 ? 'es' : ''}`,
-    no_h2h: 'No head-to-head matches found since 2022',
+    h2h_title: (n) => `Head-to-head — ${n} match${n !== 1 ? 'es' : ''}`,
+    no_h2h: 'No head-to-head matches found',
     form_of: (name) => `Recent form — ${name}`,
     elo_h1: 'Elo Ranking — 48 teams',
-    elo_sub: 'Form score calculated from international matches since January 2022',
-    elo_info: 'Elo is a performance indicator based on recent results (WC 2022, Euro 2024, Copa América 2024, qualifications, friendlies…). It reflects team form over the period, not a match prediction.',
+    elo_sub: 'Form score calculated from the complete history of international football (since 1872)',
+    elo_info: 'Elo is a performance indicator calculated from the entire history of international football (since 1872). It includes WC 2022, Euro 2024, Copa América 2024, qualifications, friendlies, and much more. It reflects the overall level of teams, not just recent form.',
     th_team: 'Team',    th_group: 'Group',  th_elo_score: 'Elo Score',
     fifa_h1: "Men's FIFA Ranking",
     fifa_sub: (count, date, source) => `${count} national teams · Updated: ${date} · Source: ${source}`,
@@ -295,10 +297,11 @@ function resultBadge(r) {
 
 function getPeriods() {
   return [
-    { key: 'all',     label: t('period_all') },
-    { key: '2025',    label: '2025' },
-    { key: '2026',    label: '2026' },
-    { key: 'qualifs', label: t('period_qualifs') },
+    { key: 'all',      label: t('period_all') },
+    { key: '2025',     label: '2025' },
+    { key: '2026',     label: '2026' },
+    { key: 'qualifs',  label: t('period_qualifs') },
+    { key: 'all_time', label: t('period_all_time') },
   ];
 }
 
@@ -388,7 +391,7 @@ function renderFixtures() {
         <a href="#/team/${encodeURIComponent(t.slug)}">
           ${flagImg(t.iso2, t.name, 'flag-sm')}
           <span class="team-name">${dn(t.name)}</span>
-          <span class="elo-badge" title="Score Elo — indicateur de forme depuis 2022">Elo ${t.elo}</span>
+          <span class="elo-badge" title="Score Elo — calculé depuis 1872">Elo ${t.elo}</span>
         </a>
       </div>`).join('');
 
@@ -466,7 +469,7 @@ function renderTeam(slug) {
       </div>
       <div class="slider-row">
         <label>${t('slider_label', sliderPeriod)}</label>
-        <input type="range" id="period-slider" min="5" max="${Math.min(30, team.matches.length || 30)}"
+        <input type="range" id="period-slider" min="5" max="${Math.min(50, team.matches.length || 50)}"
                value="${sliderPeriod}">
       </div>
     </div>
@@ -876,9 +879,9 @@ function renderRankings() {
           <ul class="elo-params">
             <li>Home advantage: <strong>+75 pts</strong> (neutralized on neutral ground)</li>
             <li>Starting score: <strong>1,500</strong> per team</li>
-            <li>Dataset: <strong>3,970 matches</strong> since January 2022</li>
+            <li>Dataset: <strong>49,329 matches</strong> — complete history since 1872</li>
           </ul>
-          <p class="elo-note">This ranking reflects recent form, not historical record. A team that had a poor 2022–2023 but a strong 2024–2025 will rank higher than its FIFA ranking suggests.</p>
+          <p class="elo-note">This ranking reflects the overall level of teams across their entire history. Unlike the FIFA ranking, it goes all the way back to 1872 and gives more weight to high-stakes matches.</p>
         </div>
       </div>
     </div>
@@ -905,9 +908,9 @@ function renderRankings() {
           <ul class="elo-params">
             <li>Avantage domicile : <strong>+75 pts</strong> (annulé sur terrain neutre)</li>
             <li>Score initial : <strong>1 500</strong> par équipe</li>
-            <li>Base : <strong>3 970 matchs</strong> depuis janvier 2022</li>
+            <li>Base : <strong>49 329 matchs</strong> — historique complet depuis 1872</li>
           </ul>
-          <p class="elo-note">Ce classement reflète la forme récente, pas le palmarès historique. Une équipe qui a mal démarré en 2022–2023 mais s'est reprise en 2024–2025 sera mieux classée ici que dans le classement FIFA.</p>
+          <p class="elo-note">Ce classement reflète le niveau global des équipes sur toute leur histoire. Contrairement au classement FIFA, il remonte jusqu'en 1872 et pondère davantage les matchs à enjeu élevé.</p>
         </div>
       </div>
     </div>
@@ -1000,16 +1003,16 @@ function renderData() {
     { file: 'fixtures.json',     label: 'WC 2026 Matches',       desc: '72 group stage matches: dates, cities, teams, Elo score.',                                                                                          icon: '📅', type: 'JSON' },
     { file: 'teams.json',        label: 'Team profiles',          desc: '48 qualified teams: stats by period (since 2022, 2025, 2026, WC qualifiers), last 30 matches, Elo score.',                                          icon: '🏳️', type: 'JSON' },
     { file: 'groups.json',       label: 'Groups',                 desc: '12 groups with squad composition and Elo score for each team.',                                                                                     icon: '📋', type: 'JSON' },
-    { file: 'rankings.json',     label: 'Elo Ranking',            desc: '48 teams ranked by Elo score (form indicator based on results since 2022).',                                                                        icon: '📊', type: 'JSON' },
+    { file: 'rankings.json',     label: 'Elo Ranking',            desc: '48 teams ranked by Elo score (calculated from complete international football history since 1872).',                                     icon: '📊', type: 'JSON' },
     { file: 'fifa_ranking.json', label: 'FIFA Ranking',           desc: 'Official FIFA ranking (211 national teams) with points and confederation.',                                                                         icon: '🏆', type: 'JSON' },
-    { file: 'results.csv',       label: 'Historical results',     desc: 'All international matches since January 2022 (WC 2022, Euro 2024, Copa América, AFCON, Nations League, WC 2026 qualifiers, friendlies…).',         icon: '📰', type: 'CSV'  },
+    { file: 'results.csv',       label: 'Historical results',     desc: 'Complete history of international football since 1872 — 49,329 matches including WC 2022, Euro 2024, Copa América, AFCON, Nations League, WC 2026 qualifiers, friendlies…', icon: '📰', type: 'CSV'  },
   ] : [
     { file: 'fixtures.json',     label: 'Matchs WC 2026',         desc: '72 matchs de phase de groupes : dates, villes, équipes, score Elo.',                                                                               icon: '📅', type: 'JSON' },
     { file: 'teams.json',        label: 'Fiches équipes',          desc: '48 équipes qualifiées : stats par période (depuis 2022, 2025, 2026, qualifs), 30 derniers matchs, score Elo.',                                     icon: '🏳️', type: 'JSON' },
     { file: 'groups.json',       label: 'Groupes',                 desc: '12 groupes avec la composition et le score Elo de chaque équipe.',                                                                                 icon: '📋', type: 'JSON' },
-    { file: 'rankings.json',     label: 'Classement Elo',          desc: '48 équipes classées par score Elo (indicateur de forme, basé sur les résultats depuis 2022).',                                                     icon: '📊', type: 'JSON' },
+    { file: 'rankings.json',     label: 'Classement Elo',          desc: '48 équipes classées par score Elo (calculé sur l\'historique complet du football international depuis 1872).',                                     icon: '📊', type: 'JSON' },
     { file: 'fifa_ranking.json', label: 'Classement FIFA',         desc: 'Classement FIFA officiel (211 sélections) avec points et confédération.',                                                                          icon: '🏆', type: 'JSON' },
-    { file: 'results.csv',       label: 'Résultats historiques',   desc: 'Tous les matchs internationaux depuis janvier 2022 (WC 2022, Euro 2024, Copa América, CAN, qualifications, amicaux…).',                           icon: '📰', type: 'CSV'  },
+    { file: 'results.csv',       label: 'Résultats historiques',   desc: 'Historique complet du football international depuis 1872 — 49 329 matchs dont WC 2022, Euro 2024, Copa América, CAN, qualifications, amicaux…',  icon: '📰', type: 'CSV'  },
   ];
 
   const cards = datasets.map(d => `
@@ -1029,7 +1032,7 @@ function renderData() {
   const infoBanner = LANG === 'en' ? `
     <strong>Results</strong> —
     <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
-    (CC0, active — last commit May 2026) · 3,970 matches since Jan 2022,
+    (CC0, active — last commit May 2026) · complete history since 1872 (49,329 matches),
     including 108 real 2026 results + 72 WC 2026 fixtures.
     &nbsp;&nbsp;<strong>FIFA Ranking</strong> — Official API
     <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
@@ -1039,7 +1042,7 @@ function renderData() {
   ` : `
     <strong>Résultats</strong> —
     <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
-    (CC0, actif — dernier commit mai 2026) · 3 970 matchs depuis jan 2022,
+    (CC0, actif — dernier commit mai 2026) · historique complet depuis 1872 (49 329 matchs),
     dont 108 résultats 2026 + 72 fixtures WC 2026.
     &nbsp;&nbsp;<strong>Classement FIFA</strong> — API officielle
     <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
@@ -1054,9 +1057,9 @@ function renderData() {
         <strong>Historical results</strong>:
         <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
         (CC0) — <strong>active</strong> repo, last commit May 12, 2026.
-        3,970 matches since Jan 2022 · 108 real 2026 results with scores ·
+        Complete history since 1872 — 49,329 matches · 108 real 2026 results with scores ·
         72 WC 2026 fixtures (NA scores = upcoming matches) ·
-        WC 2022, Euro 2024, Copa América 2024, AFCON, Nations League, WC 2026 qualifiers, friendlies.
+        WC 2022, Euro 2024, Copa América 2024, AFCON, Nations League, WC 2026 qualifiers, friendlies and every major tournament since 1872.
       </li>
       <li>
         <strong>FIFA Ranking</strong>:
@@ -1078,9 +1081,9 @@ function renderData() {
         <strong>Résultats historiques</strong> :
         <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
         (CC0) — repo <strong>actif</strong>, dernier commit 12 mai 2026.
-        3 970 matchs depuis jan 2022 · 108 résultats 2026 avec scores réels ·
+        Historique complet depuis 1872 — 49 329 matchs · 108 résultats 2026 avec scores réels ·
         72 fixtures WC 2026 (scores <code>NA</code> = matchs à venir) ·
-        WC 2022, Euro 2024, Copa América 2024, CAN, Nations League, qualifications WC 2026, amicaux.
+        WC 2022, Euro 2024, Copa América 2024, CAN, Nations League, qualifications WC 2026, amicaux et tous les grands tournois depuis 1872.
       </li>
       <li>
         <strong>Classement FIFA</strong> :
