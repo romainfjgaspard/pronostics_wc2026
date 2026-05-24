@@ -792,14 +792,39 @@ function renderData() {
       <p>Tous les fichiers sont au format ouvert (JSON / CSV) — libres de réutilisation.</p>
     </div>
 
+    <div class="info-banner">
+      <strong>Résultats historiques</strong> —
+      <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
+      (CC0, mis à jour en continu) · 3 970 matchs depuis janvier 2022.
+      &nbsp;&nbsp;<strong>Classement FIFA</strong> — API officielle
+      <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
+      · 211 sélections · avril 2026 · France #1.
+      &nbsp;&nbsp;<strong>Score Elo</strong> — calcul maison sur K-facteurs
+      WC×60 · tournois×50 · qualifs×35 · amicaux×20.
+    </div>
+
     <div class="data-grid">${cards}</div>
 
     <div class="source-section">
-      <h3>Sources</h3>
+      <h3>Sources détaillées</h3>
       <ul>
-        <li>Résultats historiques : <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a> (CC0)</li>
-        <li>Classement FIFA : <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a> (API officielle FDCP)</li>
-        <li>Score Elo : calcul maison — K-facteurs WC×60, tournois×50, qualifs×35, amicaux×20</li>
+        <li>
+          <strong>Résultats historiques</strong> :
+          <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a> (CC0) —
+          3 970 matchs depuis jan 2022 · WC 2022, Euro 2024, Copa América 2024, CAN, Nations League, qualifications, amicaux.
+        </li>
+        <li>
+          <strong>Classement FIFA</strong> :
+          <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
+          via API officielle FDCP — 211 sélections, avril 2026 (France #1, 1 877 pts).
+          Le repo <a href="https://github.com/cnc8/fifa-world-ranking" target="_blank" class="ext-link">cnc8/fifa-world-ranking</a>
+          est conservé en fallback uniquement (abandonné depuis jan 2021, données de déc. 2020).
+        </li>
+        <li>
+          <strong>Score Elo</strong> : calcul maison —
+          K-facteurs WC×60 · tournois×50 · qualifs×35 · amicaux×20 ·
+          avantage terrain +75 (neutralisé sur terrain neutre).
+        </li>
       </ul>
     </div>`;
 }
