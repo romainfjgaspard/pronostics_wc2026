@@ -46,8 +46,11 @@ img { display: block; }
   padding: 0 20px;
 }
 .brand {
-  font-size: 1.2rem; font-weight: 700; white-space: nowrap;
-  color: var(--accent); letter-spacing: -.5px;
+  display: flex; align-items: center; flex-shrink: 0;
+}
+.brand-trophy {
+  height: 36px; width: auto; display: block;
+  filter: drop-shadow(0 0 4px rgba(34,197,94,.4));
 }
 .nav-links { display: flex; gap: 4px; overflow-x: auto; min-width: 0; scrollbar-width: none; }
 .nav-links::-webkit-scrollbar { display: none; }
@@ -867,15 +870,22 @@ img { display: block; }
 /* ─────────────────────────────────────────────
    Bouton partage natif
 ───────────────────────────────────────────── */
-.share-btn { background: none; border: none; color: var(--text); font-size: 1rem; cursor: pointer; padding: 6px 8px; }
+.share-btn {
+  background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  padding: 6px 8px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+.share-btn:hover { color: var(--text); }
 
 /* ─────────────────────────────────────────────
    Navigation mobile (select natif < 640px)
 ───────────────────────────────────────────── */
 .nav-select {
   display: none;
-  flex: 1;
-  min-width: 0;
+  flex: 1; min-width: 0; max-width: 200px;
   padding: 8px 12px;
   background: var(--surface);
   color: var(--text);
@@ -883,12 +893,12 @@ img { display: block; }
   border-radius: 8px;
   font-size: 1rem;
 }
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .nav-links { display: none; }
   .nav-select { display: block; }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .nav-link { padding: 5px 8px; font-size: .78rem; }
   .lang-btn { padding: 4px 9px; font-size: .7rem; min-height: 32px; min-width: 32px; }
 }

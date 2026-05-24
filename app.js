@@ -158,6 +158,9 @@ function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
+  document.title = LANG === 'fr'
+    ? 'CdM 2026 — Données & Statistiques'
+    : 'WC 2026 — Data & Statistics';
   updateNavSelectOptions();
   route();
 }
