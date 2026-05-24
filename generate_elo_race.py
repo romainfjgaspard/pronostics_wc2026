@@ -65,28 +65,27 @@ def elo_exp(ra, rb):
 
 
 def build_snapshots(wc_teams: set) -> dict[str, dict]:
-    """Rejoue le calcul Elo mois par mois et retourne les snapshots."""
+    """Rejoue le calcul Elo année par année et retourne les snapshots."""
     with open(ROOT / "data" / "results.csv", encoding="utf-8") as f:
         results = list(csv.DictReader(f))
 
-    # Début de la course à partir de 1930 (1er mondial) pour éviter les données trop creuses
     history = sorted(
         [r for r in results
-         if r["date"] >= "1930-01-01"
+         if r["date"] >= "1872-01-01"
          and not (r["tournament"] == "FIFA World Cup" and r["date"] >= "2026-06-01")],
         key=lambda x: x["date"],
     )
 
     elo = defaultdict(lambda: 1500.0)
     snapshots: dict[str, dict] = {}
-    current_month = None
+    current_year = None
 
     for m in history:
-        month = m["date"][:7]
-        if month != current_month:
-            if current_month:
-                snapshots[current_month] = {t: round(elo[t]) for t in wc_teams}
-            current_month = month
+        year = m["date"][:4]
+        if year != current_year:
+            if current_year:
+                snapshots[current_year] = {t: round(elo[t]) for t in wc_teams}
+            current_year = year
 
         h, a = m["home_team"], m["away_team"]
         try:
@@ -102,8 +101,8 @@ def build_snapshots(wc_teams: set) -> dict[str, dict]:
         elo[h] += k * (sa - ea)
         elo[a] += k * ((1 - sa) - (1 - ea))
 
-    if current_month:
-        snapshots[current_month] = {t: round(elo[t]) for t in wc_teams}
+    if current_year:
+        snapshots[current_year] = {t: round(elo[t]) for t in wc_teams}
 
     return snapshots
 
@@ -119,23 +118,18 @@ def main():
     wc_teams = set(r["name"] for r in rankings)
     print(f"\n  {len(wc_teams)} équipes qualifiées chargées")
 
-    # Elo snapshots mensuels
+    # Elo snapshots annuels
     snapshots = build_snapshots(wc_teams)
-    months_raw = sorted(snapshots.keys())
-    print(f"  {len(months_raw)} snapshots mensuels ({months_raw[0]} → {months_raw[-1]})")
+    years_raw = sorted(snapshots.keys())
+    print(f"  {len(years_raw)} snapshots annuels ({years_raw[0]} → {years_raw[-1]})")
 
-    # Noms de mois lisibles
-    month_labels = [
-        pd.to_datetime(m + "-01").strftime("%b %Y") for m in months_raw
-    ]
-
-    # DataFrame : lignes = mois, colonnes = équipes (tri alphabétique)
+    # DataFrame : lignes = années, colonnes = équipes (tri alphabétique)
     teams_sorted = sorted(wc_teams)
     df = pd.DataFrame(
-        {t: [snapshots[m].get(t, 1500) for m in months_raw] for t in teams_sorted},
-        index=month_labels,
+        {t: [snapshots[y].get(t, 1500) for y in years_raw] for t in teams_sorted},
+        index=years_raw,
     )
-    df.index.name = "Mois"
+    df.index.name = "Année"
 
     # Couleurs dans l'ordre des colonnes
     colors = [CONF_COLORS.get(TEAM_CONF.get(t, ""), "#64748b") for t in df.columns]
@@ -154,8 +148,8 @@ def main():
         n_bars=12,
         fixed_order=False,
         fixed_max=False,
-        steps_per_period=20,
-        period_length=800,
+        steps_per_period=4,
+        period_length=300,
         interpolate_period=False,
         label_bars=True,
         bar_size=0.85,
@@ -171,7 +165,7 @@ def main():
             "size": 10,
         },
         cmap=colors,
-        title="WC 2026 — Elo Rating Evolution (Top 12)",
+        title="WC 2026 — Elo Rating Evolution 1872–2026 (Top 12)",
         title_size=14,
         bar_label_size=9,
         tick_label_size=10,

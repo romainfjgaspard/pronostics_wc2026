@@ -1028,6 +1028,19 @@ function renderRankings() {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+    </div>
+    <div class="race-section">
+      <h2 style="margin-bottom:8px">
+        ${LANG === 'fr' ? 'Évolution historique du classement Elo (1872–2026)' : 'Historical Elo ranking evolution (1872–2026)'}
+      </h2>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px">
+        ${LANG === 'fr'
+          ? 'Animation Bar Chart Race — scores Elo annuels des 48 équipes qualifiées pour la Coupe du Monde 2026.'
+          : 'Bar Chart Race animation — annual Elo scores for the 48 WC 2026 qualified teams.'}
+      </p>
+      <img class="elo-race-video" src="./data/elo_race.gif" loading="lazy"
+           onerror="this.closest('.race-section').style.display='none'"
+           alt="Bar Chart Race Elo 1872–2026">
     </div>`;
 }
 

@@ -797,6 +797,14 @@ img { display: block; }
   background: var(--blue);
   color: #0f172a;
 }
+.race-section { margin-top: 48px; }
+.elo-race-video {
+  width: 100%;
+  max-width: 900px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+}
 @media (max-width: 700px) {
   .nav-link { padding: 5px 8px; font-size: .78rem; }
   .lang-btn { padding: 4px 9px; font-size: .7rem; }
