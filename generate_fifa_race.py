@@ -160,7 +160,7 @@ def main() -> None:
         tick_label_size=10,
         bar_kwargs={"alpha": 0.88, "ec": "none"},
         period_fmt='{x:.0f}',
-        filter_column_colors=True,
+        filter_column_colors=False,
     )
 
     if test_mode:

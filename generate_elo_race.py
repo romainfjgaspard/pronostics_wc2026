@@ -284,7 +284,7 @@ def main():
         tick_label_size=10,
         bar_kwargs={"alpha": 0.88, "ec": "none"},
         period_fmt='{x:.0f}',
-        filter_column_colors=True,
+        filter_column_colors=False,
     )
 
     # T3-4 — Test rapide : 5 premières années, steps=1 → valider visuellement avant regen complète
