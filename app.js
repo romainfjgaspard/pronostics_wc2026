@@ -153,6 +153,7 @@ function initLang() {
   });
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === LANG);
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
   });
 }
 
