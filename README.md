@@ -15,7 +15,7 @@ Data site for the **2026 FIFA World Cup** (Canada · United States · Mexico, Ju
 - **Team profile** — stats by period (since 2022 / 2025 / 2026 / WC qualifiers), recent form, last 30 matches
 - **Comparison** — side-by-side stats, head-to-head record, recent form for both teams
 - **FIFA Ranking** — official ranking of 211 national teams (live FIFA API, auto-updated)
-- **Elo Ranking** — form indicator for the 48 qualified teams, computed from results since 2022
+- **Elo Ranking** — custom Elo indicator for the 48 qualified teams, computed from the complete history since 1872
 - **Download** — all datasets as JSON/CSV
 - **FR / EN toggle** — full bilingual interface
 
@@ -40,8 +40,9 @@ Data site for the **2026 FIFA World Cup** (Canada · United States · Mexico, Ju
 │   ├── teams.json              # 48 team profiles (generated)
 │   ├── groups.json             # 12 group compositions (generated)
 │   ├── rankings.json           # Elo ranking — 48 teams (generated)
+│   ├── elo_ranking_history.json # Elo ranking snapshots 1872–2026 — 155 years (generated)
 │   ├── fifa_ranking.json       # Official FIFA ranking — 211 teams (generated)
-│   ├── results.csv             # 3,970 international matches since Jan 2022 (source)
+│   ├── results.csv             # 49,329 international matches since 1872 (source)
 │   ├── matches_enriched.json   # Enriched match history (source)
 │   └── uefa_qualifs_wc2026.csv # UEFA WC 2026 qualifiers (parsed)
 ├── fetch_data.py               # Downloads results from martj42/international_results
@@ -77,10 +78,9 @@ python3 generate_web_data.py
 
 Source: [martj42/international_results](https://github.com/martj42/international_results) (CC0) — **active repo**, last commit May 12, 2026.
 
-- **3,970 matches** since January 1, 2022
-- **108 matches in 2026** with real scores (qualifiers, friendlies through March 2026)
-- **72 WC 2026 fixtures** included (score `NA` = matches not yet played at fetch time)
-- Covers: WC 2022, Euro 2024, Copa América 2024, AFCON 2023/2024, Nations League, WC 2026 qualifiers, friendlies
+- **49,329 matches** since 1872 — complete history of international football
+- Covers **all competitions since their creation** : FIFA World Cup, Euro, Copa América, AFCON, Asian Cup, Nations League, qualifiers, friendlies...
+- Including: 108 real 2026 results + 72 WC 2026 fixtures (score `NA` = upcoming matches)
 - Fields: date, home, away, score, tournament, city, neutral ground
 
 ### FIFA Ranking (`fifa_ranking.json`)
@@ -102,7 +102,7 @@ Source: **official FIFA API** — endpoint `api.fifa.com/api/v3/fifarankings/ran
 
 Custom calculation — **not available in any public source**.
 
-Form score computed from the 3,970 matches since January 2022:
+Computed from the 49,329 matches since 1872:
 
 | Match type | K-factor |
 |---|---|
@@ -118,7 +118,7 @@ Form score computed from the 3,970 matches since January 2022:
 
 Data **generated and not available in raw sources**:
 
-- Aggregated stats by period (since 2022 / 2025 / 2026 / WC qualifiers): GP, W, D, L, GF, GA, GD, avg goals
+- Aggregated stats by period (since 1872 / WC qualifiers): GP, W, D, L, GF, GA, GD, avg goals
 - Last 30 matches with opponent, score, result, competition
 - Computed Elo score and iso2 code for flags
 

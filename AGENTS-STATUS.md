@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 8 : Équipe + Confrontation)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9–P10 à faire (PLAN_CORRECTIONS.md)
+**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 9 : README mise à jour)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9 ✅ P10 à faire (PLAN_CORRECTIONS.md)
 
 ---
 
@@ -573,6 +573,19 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 
 ---
 
+### Session 2026-05-25 — Phase 9 : README mise à jour
+
+**Fichier modifié :** `README.md`
+
+- Feature Elo Ranking : `"computed from results since 2022"` → `"computed from the complete history since 1872"`
+- Structure `results.csv` : `3,970 international matches since Jan 2022` → `49,329 international matches since 1872`
+- Section "Historical results" : bloc 4 lignes → 3 lignes (49 329 matchs, toutes compétitions depuis leur création, WC fixtures)
+- Section "Elo Score" : `"Form score computed from the 3,970 matches since January 2022"` → `"Computed from the 49,329 matches since 1872"`
+- Team profiles : `"since 2022 / 2025 / 2026 / WC qualifiers"` → `"since 1872 / WC qualifiers"`
+- Structure : ajout de `elo_ranking_history.json` (155 snapshots, Phase 6 ✅)
+
+---
+
 ### Session 2026-05-25 — Phase 8 : Équipe + Confrontation — drapeaux HD + layout + FIFA rank + forme droite
 
 **Fichiers modifiés :** `fetch_flags.py`, `app.js`, `style.css`
@@ -622,4 +635,5 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 | **P6** | Elo ranking : `elo_sub` raccourci, explainer → lien Données, BCR en haut, slider 1872–2025, `elo_ranking_history.json` (155 snapshots) | ✅ Fait (2026-05-25) |
 | **P7** | Données : suppression infoBanner, descriptions "depuis 1872", section méthodologie Elo détaillée | ✅ Fait (2026-05-25) |
 | **P8** | Drapeaux w320, slider+bouton en ligne, badge FIFA rank, forme droite alignée | ✅ Fait (2026-05-25) |
-| **P9–P10** | README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
+| **P9** | README : 6 corrections (1872, 49 329 matchs, elo_ranking_history.json) | ✅ Fait (2026-05-25) |
+| **P10** | Quiz Drapeaux — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
