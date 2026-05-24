@@ -10,7 +10,7 @@ Dépendances :
 Sortie : data/elo_race.mp4  (ou data/elo_race.gif si ffmpeg absent)
 """
 
-import copy, csv, json
+import copy, csv, json, sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -49,6 +49,14 @@ TEAM_CONF = {
     "Sweden": "UEFA", "Switzerland": "UEFA", "Tunisia": "CAF",
     "Turkey": "UEFA", "United States": "CONCACAF", "Uruguay": "CONMEBOL",
     "Uzbekistan": "AFC",
+}
+
+# Noms abrégés pour les barres (réduit la marge blanche à gauche)
+SHORT_NAMES = {
+    "Bosnia and Herzegovina": "Bosnia",
+    "Trinidad and Tobago":    "T&T",
+    "United States":          "USA",
+    "Republic of Ireland":    "Ireland",
 }
 
 # ── Calcul Elo (identique à generate_web_data.py) ────────────────────────────
@@ -108,8 +116,12 @@ def build_snapshots(wc_teams: set) -> dict[str, dict]:
 
 
 def main():
+    test_mode = "--test" in sys.argv
+
     print("=" * 55)
     print("  Bar Chart Race — Elo WC 2026")
+    if test_mode:
+        print("  MODE TEST (5 premières années)")
     print("=" * 55)
 
     # WC teams from rankings.json
@@ -129,49 +141,58 @@ def main():
         {t: [snapshots[y].get(t, 1500) for y in years_raw] for t in teams_sorted},
         index=years_raw,
     )
+    df.index = [int(y) for y in years_raw]
     df.index.name = "Année"
 
-    # Couleurs dans l'ordre des colonnes
-    colors = [CONF_COLORS.get(TEAM_CONF.get(t, ""), "#64748b") for t in df.columns]
-
-    # Légende des confédérations dans le titre
-    conf_legend = "  ".join(
-        f"■ {conf}" for conf, color in CONF_COLORS.items()
-    )
+    # T3-1 — Noms abrégés (réduit la marge blanche à gauche)
+    df.rename(columns=SHORT_NAMES, inplace=True)
+    TEAM_CONF_SHORT = {SHORT_NAMES.get(k, k): v for k, v in TEAM_CONF.items()}
+    colors = [CONF_COLORS.get(TEAM_CONF_SHORT.get(col, ""), "#64748b") for col in df.columns]
 
     print("\n⬡ Génération de l'animation …")
 
+    # T3-2 — Top 10 + lissage ; T3-3 — Labels repositionnés
     race_kwargs = dict(
         df=df,
         orientation="h",
         sort="desc",
-        n_bars=12,
+        n_bars=10,
         fixed_order=False,
         fixed_max=False,
-        steps_per_period=4,
-        period_length=300,
-        interpolate_period=False,
+        steps_per_period=8,
+        period_length=500,
+        interpolate_period=True,
         label_bars=True,
         bar_size=0.85,
         period_label={
             "x": 0.97, "y": 0.04,
             "ha": "right", "va": "bottom",
-            "size": 20, "fontweight": "bold",
+            "size": 18, "fontweight": "bold",
+            "color": "#f1f5f9",
+            "bbox": {"facecolor": "#0f172a", "edgecolor": "none", "pad": 4, "alpha": 0.85},
+            "zorder": 5,
         },
-        period_summary_func=lambda v, r: {
-            "x": 0.97, "y": 0.13,
-            "ha": "right", "va": "bottom",
-            "s": f"Top: {v.idxmax()}  {v.max():.0f} pts",
-            "size": 10,
-        },
+        period_summary_func=None,
         cmap=colors,
-        title="WC 2026 — Elo Rating Evolution 1872–2026 (Top 12)",
+        title="Elo Rating Evolution 1872–2026 (Top 10)",
         title_size=14,
         bar_label_size=9,
         tick_label_size=10,
         bar_kwargs={"alpha": 0.88, "ec": "none"},
         filter_column_colors=True,
     )
+
+    # T3-4 — Test rapide : 5 premières années, steps=1 → valider visuellement avant regen complète
+    if test_mode:
+        test_kw = copy.deepcopy(race_kwargs)
+        test_kw["df"] = df.iloc[:5]
+        test_kw["steps_per_period"] = 1
+        test_kw["period_length"] = 100
+        output_test = ROOT / "data" / "elo_race_test.gif"
+        bcr.bar_chart_race(filename=str(output_test), **test_kw)
+        print(f"\n  ✓ Test sauvegardé → {output_test}")
+        print("  Valider visuellement avant de lancer la génération complète.")
+        return
 
     output_mp4 = ROOT / "data" / "elo_race.mp4"
     output_gif = ROOT / "data" / "elo_race.gif"
