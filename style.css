@@ -414,6 +414,69 @@ img { display: block; }
 }
 
 /* ─────────────────────────────────────────────
+   Elo explainer block
+───────────────────────────────────────────── */
+.elo-explainer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.elo-explainer-intro {
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.elo-explainer-intro strong { color: var(--text); }
+.elo-explainer-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 600px) { .elo-explainer-cols { grid-template-columns: 1fr; } }
+.elo-explainer-cols h4 {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: var(--blue);
+  margin-bottom: 10px;
+}
+.elo-kfactor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.elo-kfactor-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+.elo-kfactor-table td:last-child {
+  text-align: right;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.elo-params {
+  list-style: none;
+  font-size: .82rem;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.elo-params strong { color: var(--text); }
+.elo-note {
+  margin-top: 12px;
+  font-size: .78rem;
+  color: var(--border);
+  font-style: italic;
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+/* ─────────────────────────────────────────────
    FIFA ranking — changement de rang
 ───────────────────────────────────────────── */
 .rank-chg {

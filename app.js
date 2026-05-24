@@ -853,12 +853,72 @@ function renderRankings() {
     </tr>`;
   }).join('');
 
+  const explainer = LANG === 'en' ? `
+    <div class="elo-explainer">
+      <p class="elo-explainer-intro">
+        Elo is a rating system originally invented for chess and widely used in sports to measure relative strength.
+        Each team starts at <strong>1,500 points</strong>. After each match, points are redistributed between the two
+        teams based on the result and the Elo gap between them — beating a stronger opponent earns more points than
+        beating a weaker one.
+      </p>
+      <div class="elo-explainer-cols">
+        <div>
+          <h4>K-factors — match importance</h4>
+          <table class="elo-kfactor-table">
+            <tr><td>FIFA World Cup</td><td>×60</td></tr>
+            <tr><td>Euro, Copa América, AFCON, Asian Cup</td><td>×50</td></tr>
+            <tr><td>Qualifiers, Nations League</td><td>×35</td></tr>
+            <tr><td>Friendlies</td><td>×20</td></tr>
+          </table>
+        </div>
+        <div>
+          <h4>Other parameters</h4>
+          <ul class="elo-params">
+            <li>Home advantage: <strong>+75 pts</strong> (neutralized on neutral ground)</li>
+            <li>Starting score: <strong>1,500</strong> per team</li>
+            <li>Dataset: <strong>3,970 matches</strong> since January 2022</li>
+          </ul>
+          <p class="elo-note">This ranking reflects recent form, not historical record. A team that had a poor 2022–2023 but a strong 2024–2025 will rank higher than its FIFA ranking suggests.</p>
+        </div>
+      </div>
+    </div>
+  ` : `
+    <div class="elo-explainer">
+      <p class="elo-explainer-intro">
+        L'Elo est un système de classement inventé pour les échecs et adapté à de nombreux sports pour mesurer
+        le niveau relatif des équipes. Chaque équipe démarre à <strong>1 500 points</strong>. Après chaque match,
+        des points sont échangés entre les deux équipes selon le résultat et leur écart d'Elo — battre une équipe
+        plus forte rapporte davantage que battre une équipe plus faible.
+      </p>
+      <div class="elo-explainer-cols">
+        <div>
+          <h4>K-facteurs — importance des matchs</h4>
+          <table class="elo-kfactor-table">
+            <tr><td>Coupe du Monde FIFA</td><td>×60</td></tr>
+            <tr><td>Euro, Copa América, CAN, Coupe d'Asie</td><td>×50</td></tr>
+            <tr><td>Qualifications, Nations League</td><td>×35</td></tr>
+            <tr><td>Matchs amicaux</td><td>×20</td></tr>
+          </table>
+        </div>
+        <div>
+          <h4>Autres paramètres</h4>
+          <ul class="elo-params">
+            <li>Avantage domicile : <strong>+75 pts</strong> (annulé sur terrain neutre)</li>
+            <li>Score initial : <strong>1 500</strong> par équipe</li>
+            <li>Base : <strong>3 970 matchs</strong> depuis janvier 2022</li>
+          </ul>
+          <p class="elo-note">Ce classement reflète la forme récente, pas le palmarès historique. Une équipe qui a mal démarré en 2022–2023 mais s'est reprise en 2024–2025 sera mieux classée ici que dans le classement FIFA.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
   app.innerHTML = `
     <div class="page-header">
       <h1>${t('elo_h1')}</h1>
       <p>${t('elo_sub')}</p>
     </div>
-    <div class="info-banner">${t('elo_info')}</div>
+    ${explainer}
     <div class="table-wrap">
       <table class="rankings-table">
         <thead><tr>
