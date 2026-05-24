@@ -516,9 +516,7 @@ function renderFixtures() {
             <div class="proba-seg proba-draw" style="width:${(p.draw*100).toFixed(0)}%">${(p.draw*100).toFixed(0)}%</div>
             <div class="proba-seg proba-away" style="width:${(p.away*100).toFixed(0)}%">${(p.away*100).toFixed(0)}%</div>
           </div>
-          <p class="proba-note">⚡ ${LANG === 'fr'
-            ? "Indicateur Elo — terrain neutre, basé sur l'historique depuis 1872"
-            : 'Elo indicator — neutral ground, based on history since 1872'}</p>`;
+          `;
       }
       return `
         <div class="match-card match-card-link" onclick="location.hash='#/compare/${s1}/${s2}'">
@@ -551,6 +549,11 @@ function renderFixtures() {
       <h1>${t('fixtures_h1')}</h1>
       <p>${t('fixtures_sub')}</p>
       <p class="hint-text">${t('fixtures_hint')}</p>
+      <p class="hint-text proba-hint">
+        ⚡ ${LANG === 'fr'
+          ? 'Probabilités calculées d\'après un indicateur Elo custom — <a href="#/rankings" style="color:var(--accent)">voir Classement Elo</a>'
+          : 'Win probabilities based on a custom Elo indicator — <a href="#/rankings" style="color:var(--accent)">see Elo Ranking</a>'}
+      </p>
     </div>
     <div class="groups-grid">${groupsHtml}</div>`;
 }
