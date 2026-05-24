@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 4 équipes FIFA col)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5–P10 à faire (PLAN_CORRECTIONS.md)
+**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 5 FIFA ranking)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6–P10 à faire (PLAN_CORRECTIONS.md)
 
 ---
 
@@ -454,6 +454,20 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 
 ---
 
+### Session 2026-05-25 (partie 5) — Phase 5 : Classement FIFA — noms FR + slider + BCR en haut
+
+**Fichier modifié :** `app.js`
+
+**Implémentation :**
+- `buildRows()` : `team.name` → `dn(team.name)` (lien + texte) — les noms s'affichent en français (France, Allemagne, Espagne…)
+- `app.innerHTML` : structure réordonnée — `page-header` (titre + sous-titre, sans lien anchor) → `.race-section` (BCR vidéo en haut) → `.fifa-controls` (slider) → `.table-wrap` (tableau)
+- `.fifa-controls` : `<select id="fifa-year-select">` remplacé par `<input type="range" id="fifa-year-slider" min="1992" max="2026">` + affichage de l'année sélectionnée (`#fifa-year-display`)
+- Listener `change` sur select → listener `input` sur slider ; fallback `reduce` pour les années sans snapshot exact
+
+**Non modifié :** `style.css` (`.fifa-controls` flex existant convient), `renderRankings()` (lien anchor Elo conservé — Phase 6).
+
+---
+
 ### Session 2026-05-25 (partie 2) — Analyse terrain + plan de corrections UI/UX
 
 **Contexte :** Analyse manuelle complète du site (PC + mobile) → 11 points de correction identifiés.
@@ -523,4 +537,5 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 | **P2** | Bug slider double : `::before` track explicite, `top:0/bottom:0`, tracks natifs transparents, z-index corrigés | ✅ Fait (2026-05-25) |
 | **P3** | Onglet Matchs : `proba-note` retirée de chaque match card, déplacée dans l'en-tête avec lien vers Classement Elo | ✅ Fait (2026-05-25) |
 | **P4** | Équipes : `init()` charge `fifa_ranking.json` au boot (map iso2→rang), contrôles en flex-row, colonne FIFA cliquable | ✅ Fait (2026-05-25) |
-| **P5–P10** | FIFA ranking slider, Elo ranking, données, équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
+| **P5** | FIFA ranking : noms FR (`dn()`), select → slider (1992–2026), BCR vidéo déplacée en haut | ✅ Fait (2026-05-25) |
+| **P6–P10** | Elo ranking, données, équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |

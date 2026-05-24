@@ -1258,8 +1258,8 @@ async function renderFifaRankings() {
       const teamSlug    = slugify(team.name);
       const hasTeamData = DATA.teams && DATA.teams[teamSlug];
       const nameHtml    = hasTeamData
-        ? `<a href="#/team/${encodeURIComponent(teamSlug)}">${team.name}</a>`
-        : team.name;
+        ? `<a href="#/team/${encodeURIComponent(teamSlug)}">${dn(team.name)}</a>`
+        : dn(team.name);
       return `<tr class="${rankCls}">
         <td class="rank-num" style="white-space:nowrap">${team.rank}&thinsp;${chgHtml}</td>
         <td>${flagImg(team.iso2, team.name, 'flag-sm')}</td>
@@ -1279,23 +1279,6 @@ async function renderFifaRankings() {
     <div class="page-header">
       <h1>${t('fifa_h1')}</h1>
       <p id="fifa-sub-label">${t('fifa_sub', currentRankings.length, currentDateStr, data.source || 'FIFA')}</p>
-      <a href="#fifa-race-video" class="race-anchor">
-        ▶ ${LANG === 'fr' ? "Voir l'évolution historique" : 'See historical evolution'}
-      </a>
-    </div>
-    <div class="fifa-controls">
-      <label class="fifa-year-label" for="fifa-year-select">${t('fifa_year_label')} :</label>
-      <select id="fifa-year-select" class="fifa-year-select">
-        <option value="current">${t('fifa_current_opt')} — ${currentDateStr}</option>
-      </select>
-    </div>
-    <div class="table-wrap">
-      <table class="rankings-table">
-        <thead><tr>
-          <th>#</th><th></th><th>${t('th_team')}</th><th>${t('th_confederation')}</th><th>${t('th_fifa_pts')}</th>
-        </tr></thead>
-        <tbody id="fifa-table-body">${buildRows(currentRankings, currentRankings[0]?.points || 1, true)}</tbody>
-      </table>
     </div>
     <div class="race-section">
       <h2 style="margin-bottom:8px">
@@ -1316,6 +1299,25 @@ async function renderFifaRankings() {
              src="./data/fifa_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
+    </div>
+    <div class="fifa-controls">
+      <label class="fifa-year-label" for="fifa-year-slider">
+        ${LANG === 'fr' ? 'Année' : 'Year'} :
+      </label>
+      <span id="fifa-year-display" style="font-weight:700;color:var(--text);min-width:40px">
+        ${currentDateStr}
+      </span>
+      <input type="range" id="fifa-year-slider"
+             min="1992" max="2026" step="1" value="2026"
+             style="flex:1;max-width:260px;accent-color:var(--accent)">
+    </div>
+    <div class="table-wrap">
+      <table class="rankings-table">
+        <thead><tr>
+          <th>#</th><th></th><th>${t('th_team')}</th><th>${t('th_confederation')}</th><th>${t('th_fifa_pts')}</th>
+        </tr></thead>
+        <tbody id="fifa-table-body">${buildRows(currentRankings, currentRankings[0]?.points || 1, true)}</tbody>
+      </table>
     </div>`;
 
   const fifaVideo = app.querySelector('#fifa-race-video');
@@ -1330,27 +1332,24 @@ async function renderFifaRankings() {
   await ensureFifaHistory();
   if (navToken !== myToken) return;
 
-  const sel = document.getElementById('fifa-year-select');
-  if (DATA.fifaHistory?.snapshots?.length) {
-    DATA.fifaHistory.snapshots.slice().reverse().forEach(snapshot => {
-      const top1 = snapshot.rankings[0]?.name || '';
-      const opt  = document.createElement('option');
-      opt.value  = String(snapshot.year);
-      opt.textContent = `${snapshot.year}  —  #1 ${top1}`;
-      sel.appendChild(opt);
-    });
-  }
+  const sliderEl  = document.getElementById('fifa-year-slider');
+  const displayEl = document.getElementById('fifa-year-display');
+  if (!sliderEl) return;
 
-  sel.addEventListener('change', () => {
-    const val   = sel.value;
+  sliderEl.addEventListener('input', () => {
+    const year  = parseInt(sliderEl.value, 10);
     const tbody = document.getElementById('fifa-table-body');
     const sub   = document.getElementById('fifa-sub-label');
-    if (val === 'current') {
+    if (year === 2026) {
+      displayEl.textContent = currentDateStr;
       tbody.innerHTML = buildRows(currentRankings, currentRankings[0]?.points || 1, true);
       sub.textContent = t('fifa_sub', currentRankings.length, currentDateStr, data.source || 'FIFA');
     } else {
-      const snapshot = DATA.fifaHistory.snapshots.find(s => s.year === parseInt(val));
+      const snapshot = DATA.fifaHistory?.snapshots?.find(s => s.year === year)
+        || DATA.fifaHistory?.snapshots?.reduce((prev, curr) =>
+            Math.abs(curr.year - year) < Math.abs(prev.year - year) ? curr : prev);
       if (snapshot) {
+        displayEl.textContent = String(snapshot.year);
         const maxP = snapshot.rankings[0]?.points || 1;
         tbody.innerHTML = buildRows(snapshot.rankings, maxP, false);
         const topN = DATA.fifaHistory.top_n || 30;
