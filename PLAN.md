@@ -897,6 +897,10 @@ Le bouton de bascule langue FR/EN n'est pas accessible sur mobile (probablement 
 }
 ```
 
+### 5.5 — Fix mobile : toggle FR/EN inaccessible
+ le champ competition est en anglais quand on est en mode FR, exemple friendly au lieu d'amical. Il faut bien verifier qu'aucun terme anglais sont affiché dans le mode FR
+
+
 ### Commit Phase 5
 
 ```bash

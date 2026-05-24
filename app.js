@@ -217,13 +217,16 @@ function dn(name) {
 // ── State ────────────────────────────────────────────────────────────
 let DATA = null;
 let currentSlug = null;
-let sliderPeriod = 50;
 let teamsSort = { col: 'elo', dir: 'desc' };
-let teamsPeriod = 'all';
-let teamsSlider = null;
 let teamYearMin = 1872;
 let teamYearMax = 2026;
 let teamQualifsMode = false;
+let teamsYearMin = 1872;
+let teamsYearMax = 2026;
+let teamsQualifsMode = false;
+let cmpYearMin = 1872;
+let cmpYearMax = 2026;
+let cmpQualifsMode = false;
 
 // ── Init ─────────────────────────────────────────────────────────────
 async function init() {
@@ -302,16 +305,6 @@ function resultBadge(r) {
   return `<span class="form-badge ${r}">${r}</span>`;
 }
 
-function getPeriods() {
-  return [
-    { key: 'all',      label: t('period_all') },
-    { key: '2025',     label: '2025' },
-    { key: '2026',     label: '2026' },
-    { key: 'qualifs',  label: t('period_qualifs') },
-    { key: 'all_time', label: t('period_all_time') },
-  ];
-}
-
 function computeStatsFrom(matches) {
   let gp = 0, w = 0, d = 0, l = 0, gf = 0, ga = 0;
   for (const m of matches) {
@@ -329,14 +322,6 @@ function computeStatsFrom(matches) {
   };
 }
 
-function getTeamStats(team, period) {
-  if (period === 'all')      return team.stats?.all       || null;
-  if (period === '2025')     return team.stats?.['2025']  || null;
-  if (period === '2026')     return team.stats?.['2026']  || null;
-  if (period === 'qualifs')  return team.stats?.qualifs   || null;
-  if (period === 'all_time') return team.stats?.all_time  || null;
-  return null;
-}
 
 function renderStatsGrid(s) {
   if (!s) return `<div class="no-data">${t('no_data_period')}</div>`;
@@ -570,11 +555,6 @@ function renderTeam(slug) {
   }
 }
 
-function updateStats(team, period) {
-  const stats = getTeamStats(team, period);
-  document.getElementById('stats-display').innerHTML = renderStatsGrid(stats);
-}
-
 function buildMatchesTable(matches) {
   if (!matches.length) return `<div class="no-data">${t('no_results')}</div>`;
 
@@ -604,7 +584,6 @@ function buildMatchesTable(matches) {
 // ── VIEW: Teams ───────────────────────────────────────────────────────
 function renderTeams() {
   const app = document.getElementById('app');
-  const PERIODS = getPeriods();
 
   const COL_DEFS = [
     { col: 'name',  label: t('col_team'), align: 'left' },
@@ -619,9 +598,6 @@ function renderTeams() {
     { col: 'elo',   label: t('col_elo'),  align: 'right'  },
   ];
 
-  const maxMatches = Math.max(...Object.values(DATA.teams).map(t => t.matches?.length || 0));
-  const sliderVal  = teamsSlider ?? maxMatches;
-
   app.innerHTML = `
     <div class="page-header">
       <h1>${t('teams_h1')}</h1>
@@ -629,15 +605,23 @@ function renderTeams() {
     </div>
 
     <div class="teams-controls">
-      <div class="period-btns">
-        ${PERIODS.map(p => `
-          <button class="period-btn ${teamsPeriod === p.key && teamsSlider === null ? 'active' : ''}"
-                  data-period="${p.key}">${p.label}</button>
-        `).join('')}
-      </div>
-      <div class="slider-row">
-        <label>${t('slider_label', sliderVal)}</label>
-        <input type="range" id="teams-period-slider" min="5" max="${maxMatches}" value="${sliderVal}">
+      <div class="year-slider-wrap">
+        <div class="year-slider-label" id="year-label-teams">
+          ${t('year_slider_label', teamsYearMin, teamsYearMax, 0)}
+        </div>
+        <div class="dual-slider-row">
+          <span class="year-edge">1872</span>
+          <div class="dual-slider-track">
+            <input type="range" class="year-slider year-slider-min" id="year-min-teams"
+                   min="1872" max="2026" value="${teamsYearMin}">
+            <input type="range" class="year-slider year-slider-max" id="year-max-teams"
+                   min="1872" max="2026" value="${teamsYearMax}">
+          </div>
+          <span class="year-edge">2026</span>
+        </div>
+        <button class="period-btn ${teamsQualifsMode ? 'active' : ''}" id="btn-qualifs-teams">
+          ${t('btn_qualifs_cdm')}
+        </button>
       </div>
       <input type="search" id="teams-search" class="teams-search"
              placeholder="${t('search_placeholder')}" value="">
@@ -660,34 +644,37 @@ function renderTeams() {
 
   renderTeamsBody();
 
-  app.querySelectorAll('.period-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      teamsPeriod = btn.dataset.period;
-      teamsSlider = null;
-      app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const sl = document.getElementById('teams-period-slider');
-      if (sl) {
-        sl.value = maxMatches;
-        const lbl = app.querySelector('.slider-row label');
-        if (lbl) lbl.innerHTML = t('slider_label', maxMatches);
-      }
-      renderTeamsBody(document.getElementById('teams-search')?.value || '');
-      updateTeamsSortHeaders();
-    });
-  });
+  const minSl = app.querySelector('#year-min-teams');
+  const maxSl = app.querySelector('#year-max-teams');
+  const qualBtn = app.querySelector('#btn-qualifs-teams');
+  const searchInput = app.querySelector('#teams-search');
 
-  app.querySelector('#teams-period-slider')?.addEventListener('input', e => {
-    teamsSlider = parseInt(e.target.value);
-    const lbl = app.querySelector('.slider-row label');
-    if (lbl) lbl.innerHTML = t('slider_label', teamsSlider);
-    app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-    renderTeamsBody(document.getElementById('teams-search')?.value || '');
-  });
+  function onYearChange() {
+    teamsQualifsMode = false;
+    qualBtn?.classList.remove('active');
+    renderTeamsBody(searchInput?.value || '');
+    updateTeamsSortHeaders();
+  }
 
-  app.querySelector('#teams-search')?.addEventListener('input', e => {
-    renderTeamsBody(e.target.value);
+  minSl?.addEventListener('input', () => {
+    teamsYearMin = parseInt(minSl.value, 10);
+    if (teamsYearMin > teamsYearMax) { teamsYearMax = teamsYearMin; maxSl.value = teamsYearMax; }
+    onYearChange();
   });
+  maxSl?.addEventListener('input', () => {
+    teamsYearMax = parseInt(maxSl.value, 10);
+    if (teamsYearMax < teamsYearMin) { teamsYearMin = teamsYearMax; minSl.value = teamsYearMin; }
+    onYearChange();
+  });
+  qualBtn?.addEventListener('click', () => {
+    teamsQualifsMode = !teamsQualifsMode;
+    qualBtn.classList.toggle('active', teamsQualifsMode);
+    const label = document.getElementById('year-label-teams');
+    if (label && teamsQualifsMode) label.innerHTML = t('btn_qualifs_cdm');
+    renderTeamsBody(searchInput?.value || '');
+    updateTeamsSortHeaders();
+  });
+  searchInput?.addEventListener('input', e => renderTeamsBody(e.target.value));
 
   app.querySelectorAll('.sort-th').forEach(th => {
     th.addEventListener('click', () => {
@@ -699,7 +686,7 @@ function renderTeams() {
           : (col === 'name' || col === 'group' ? 'asc' : 'desc'),
       };
       updateTeamsSortHeaders();
-      renderTeamsBody(document.getElementById('teams-search')?.value || '');
+      renderTeamsBody(searchInput?.value || '');
     });
   });
 }
@@ -708,12 +695,19 @@ function renderTeamsBody(search = '') {
   const tbody = document.getElementById('teams-tbody');
   if (!tbody) return;
 
-  let teams = Object.values(DATA.teams).map(t => {
-    const s = teamsSlider !== null
-      ? (computeStatsFrom((t.matches || []).slice(0, teamsSlider)) || { GP:0, W:0, D:0, L:0, GF:0, GA:0, GD:0 })
-      : (getTeamStats(t, teamsPeriod) || { GP:0, W:0, D:0, L:0, GF:0, GA:0, GD:0 });
-    return { ...t, s };
+  let teams = Object.values(DATA.teams).map(tm => {
+    const filtered = teamsQualifsMode
+      ? filterMatchesQualifs(tm.matches || [])
+      : filterMatchesByYears(tm.matches || [], teamsYearMin, teamsYearMax);
+    const s = computeStatsFrom(filtered) || { GP:0, W:0, D:0, L:0, GF:0, GA:0, GD:0 };
+    return { ...tm, s };
   });
+
+  const label = document.getElementById('year-label-teams');
+  if (label && !teamsQualifsMode) {
+    const totalMatches = teams.reduce((acc, tm) => acc + tm.s.GP, 0);
+    label.innerHTML = t('year_slider_label', teamsYearMin, teamsYearMax, totalMatches);
+  }
 
   if (search) {
     const q = search.toLowerCase();
@@ -773,12 +767,12 @@ function renderCompare(slug1, slug2) {
     return;
   }
 
-  const PERIODS = getPeriods();
+  // H2H sur l'historique complet (pas filtré par années)
   const h2h = (t1.matches || []).filter(m => slugify(m.opponent) === slug2);
 
-  function buildContent(period) {
-    const s1 = getTeamStats(t1, period) || computeStatsFrom(t1.matches || []) || {};
-    const s2 = getTeamStats(t2, period) || computeStatsFrom(t2.matches || []) || {};
+  function buildContent(matches1, matches2) {
+    const s1 = computeStatsFrom(matches1) || {};
+    const s2 = computeStatsFrom(matches2) || {};
     const gd1 = s1.GD ?? ((s1.GF ?? 0) - (s1.GA ?? 0));
     const gd2 = s2.GD ?? ((s2.GF ?? 0) - (s2.GA ?? 0));
 
@@ -871,23 +865,71 @@ function renderCompare(slug1, slug2) {
     </div>
 
     <div class="period-section">
-      <div class="period-btns" id="cmp-period-btns">
-        ${PERIODS.map(p => `
-          <button class="period-btn ${p.key === 'all' ? 'active' : ''}" data-period="${p.key}">${p.label}</button>
-        `).join('')}
+      <div class="year-slider-wrap">
+        <div class="year-slider-label" id="year-label-cmp">
+          ${t('year_slider_label', cmpYearMin, cmpYearMax, 0)}
+        </div>
+        <div class="dual-slider-row">
+          <span class="year-edge">1872</span>
+          <div class="dual-slider-track">
+            <input type="range" class="year-slider year-slider-min" id="year-min-cmp"
+                   min="1872" max="2026" value="${cmpYearMin}">
+            <input type="range" class="year-slider year-slider-max" id="year-max-cmp"
+                   min="1872" max="2026" value="${cmpYearMax}">
+          </div>
+          <span class="year-edge">2026</span>
+        </div>
+        <button class="period-btn ${cmpQualifsMode ? 'active' : ''}" id="btn-qualifs-cmp">
+          ${t('btn_qualifs_cdm')}
+        </button>
       </div>
     </div>
 
     <div id="compare-content"></div>`;
 
-  document.getElementById('compare-content').innerHTML = buildContent('all');
+  function applyCmpFilters() {
+    const m1 = cmpQualifsMode
+      ? filterMatchesQualifs(t1.matches || [])
+      : filterMatchesByYears(t1.matches || [], cmpYearMin, cmpYearMax);
+    const m2 = cmpQualifsMode
+      ? filterMatchesQualifs(t2.matches || [])
+      : filterMatchesByYears(t2.matches || [], cmpYearMin, cmpYearMax);
 
-  app.querySelectorAll('#cmp-period-btns .period-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      app.querySelectorAll('#cmp-period-btns .period-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('compare-content').innerHTML = buildContent(btn.dataset.period);
-    });
+    const label = document.getElementById('year-label-cmp');
+    if (label) {
+      if (cmpQualifsMode) {
+        label.innerHTML = `${t('btn_qualifs_cdm')} — ${m1.length} / ${m2.length} matchs`;
+      } else {
+        label.innerHTML = t('year_slider_label', cmpYearMin, cmpYearMax, m1.length + m2.length);
+      }
+    }
+    document.getElementById('compare-content').innerHTML = buildContent(m1, m2);
+  }
+
+  applyCmpFilters();
+
+  const minSlCmp = app.querySelector('#year-min-cmp');
+  const maxSlCmp = app.querySelector('#year-max-cmp');
+  const qualBtnCmp = app.querySelector('#btn-qualifs-cmp');
+
+  minSlCmp?.addEventListener('input', () => {
+    cmpYearMin = parseInt(minSlCmp.value, 10);
+    if (cmpYearMin > cmpYearMax) { cmpYearMax = cmpYearMin; maxSlCmp.value = cmpYearMax; }
+    cmpQualifsMode = false;
+    qualBtnCmp?.classList.remove('active');
+    applyCmpFilters();
+  });
+  maxSlCmp?.addEventListener('input', () => {
+    cmpYearMax = parseInt(maxSlCmp.value, 10);
+    if (cmpYearMax < cmpYearMin) { cmpYearMin = cmpYearMax; minSlCmp.value = cmpYearMin; }
+    cmpQualifsMode = false;
+    qualBtnCmp?.classList.remove('active');
+    applyCmpFilters();
+  });
+  qualBtnCmp?.addEventListener('click', () => {
+    cmpQualifsMode = !cmpQualifsMode;
+    qualBtnCmp.classList.toggle('active', cmpQualifsMode);
+    applyCmpFilters();
   });
 }
 
