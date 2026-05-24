@@ -500,7 +500,7 @@ function renderTeam(slug) {
     if (!wrap) return;
     if (period === 'all_time') {
       wrap.innerHTML  = buildMatchesTable(team.matches || []);
-      if (title) title.textContent = `${t('results_title')} (${(team.matches || []).length})`;
+      if (title) title.textContent = `${t('period_all_time')} (${(team.matches || []).length})`;
       if (sliderRow) sliderRow.style.display = 'none';
     } else {
       const n = Math.min(sliderPeriod, (team.matches || []).length);
