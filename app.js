@@ -156,6 +156,7 @@ function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
+  updateNavSelectOptions();
   route();
 }
 
@@ -167,6 +168,7 @@ function initLang() {
     btn.classList.toggle('active', btn.dataset.lang === LANG);
     btn.addEventListener('click', () => setLang(btn.dataset.lang));
   });
+  buildNavSelect();
 }
 
 // ── Team name translations (EN → FR) ─────────────────────────────────
@@ -330,17 +332,47 @@ async function route() {
   }
 }
 
+const NAV_PAGES = [
+  { hash: '#/',             page: 'fixtures',     labelKey: 'nav_fixtures' },
+  { hash: '#/teams',        page: 'teams',        labelKey: 'nav_teams' },
+  { hash: '#/fifa-ranking', page: 'fifa-ranking', labelKey: 'nav_fifa' },
+  { hash: '#/rankings',     page: 'rankings',     labelKey: 'nav_elo' },
+  { hash: '#/data',         page: 'data',         labelKey: 'nav_data' },
+];
+
+function buildNavSelect() {
+  updateNavSelectOptions();
+  const sel = document.getElementById('nav-select');
+  if (!sel) return;
+  sel.addEventListener('change', () => { location.hash = sel.value; });
+}
+
+function updateNavSelectOptions() {
+  const sel = document.getElementById('nav-select');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = NAV_PAGES.map(p =>
+    `<option value="${p.hash}">${t(p.labelKey)}</option>`
+  ).join('');
+  if (current) sel.value = current;
+}
+
 function setActiveNav(hash) {
+  let activePage = 'fixtures';
+  if (hash === '/teams')         activePage = 'teams';
+  else if (hash === '/rankings')      activePage = 'rankings';
+  else if (hash === '/fifa-ranking')  activePage = 'fifa-ranking';
+  else if (hash === '/data')          activePage = 'data';
+
   document.querySelectorAll('.nav-link').forEach(a => {
-    const p = a.dataset.page;
-    a.classList.toggle('active',
-      ((hash === '/' || hash.startsWith('/team/') || hash.startsWith('/compare/')) && p === 'fixtures') ||
-      (hash === '/teams'        && p === 'teams') ||
-      (hash === '/rankings'     && p === 'rankings') ||
-      (hash === '/fifa-ranking' && p === 'fifa-ranking') ||
-      (hash === '/data'         && p === 'data')
-    );
+    a.classList.toggle('active', a.dataset.page === activePage);
   });
+
+  const sel = document.getElementById('nav-select');
+  if (sel) {
+    const page = NAV_PAGES.find(p => p.page === activePage);
+    if (page) sel.value = page.hash;
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────

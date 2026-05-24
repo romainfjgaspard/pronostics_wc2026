@@ -869,6 +869,25 @@ img { display: block; }
 ───────────────────────────────────────────── */
 .share-btn { background: none; border: none; color: var(--text); font-size: 1rem; cursor: pointer; padding: 6px 8px; }
 
+/* ─────────────────────────────────────────────
+   Navigation mobile (select natif < 640px)
+───────────────────────────────────────────── */
+.nav-select {
+  display: none;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .nav-select { display: block; }
+}
+
 @media (max-width: 700px) {
   .nav-link { padding: 5px 8px; font-size: .78rem; }
   .lang-btn { padding: 4px 9px; font-size: .7rem; min-height: 32px; min-width: 32px; }
