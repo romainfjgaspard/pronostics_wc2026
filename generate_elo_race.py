@@ -3,16 +3,16 @@ generate_elo_race.py
 Génère une animation Bar Chart Race de l'évolution Elo des 48 équipes WC 2026.
 
 Dépendances :
-    pip install bar_chart_race pandas matplotlib
+    pip install bar_chart_race pandas matplotlib Pillow
     (MP4) : installer ffmpeg  — https://ffmpeg.org/download.html
-    (GIF) : pip install Pillow  (généralement inclus avec matplotlib)
 
 Sortie : data/elo_race.mp4  (ou data/elo_race.gif si ffmpeg absent)
 """
 
-import copy, csv, json, sys
+import copy, csv, io, json, sys, urllib.request
 from collections import defaultdict
 from pathlib import Path
+from PIL import Image
 
 import pandas as pd
 import matplotlib
@@ -51,6 +51,26 @@ TEAM_CONF = {
     "Uzbekistan": "AFC",
 }
 
+# Codes ISO 3166-1 alpha-2 pour flagcdn.com (gb-eng / gb-sct pour les nations britanniques)
+TEAM_ISO = {
+    "Algeria": "dz", "Argentina": "ar", "Australia": "au",
+    "Austria": "at", "Belgium": "be", "Bosnia and Herzegovina": "ba",
+    "Brazil": "br", "Canada": "ca", "Cape Verde": "cv",
+    "Colombia": "co", "Croatia": "hr", "Curaçao": "cw",
+    "Czech Republic": "cz", "DR Congo": "cd", "Ecuador": "ec",
+    "Egypt": "eg", "England": "gb-eng", "France": "fr",
+    "Germany": "de", "Ghana": "gh", "Haiti": "ht",
+    "Iran": "ir", "Iraq": "iq", "Ivory Coast": "ci",
+    "Japan": "jp", "Jordan": "jo", "Mexico": "mx",
+    "Morocco": "ma", "Netherlands": "nl", "New Zealand": "nz",
+    "Norway": "no", "Panama": "pa", "Paraguay": "py",
+    "Portugal": "pt", "Qatar": "qa", "Saudi Arabia": "sa",
+    "Scotland": "gb-sct", "Senegal": "sn", "South Africa": "za",
+    "South Korea": "kr", "Spain": "es", "Sweden": "se",
+    "Switzerland": "ch", "Tunisia": "tn", "Turkey": "tr",
+    "United States": "us", "Uruguay": "uy", "Uzbekistan": "uz",
+}
+
 # Noms abrégés pour les barres (réduit la marge blanche à gauche)
 SHORT_NAMES = {
     "Bosnia and Herzegovina": "Bosnia",
@@ -70,6 +90,66 @@ def get_k(tournament: str) -> int:
 
 def elo_exp(ra, rb):
     return 1.0 / (1.0 + 10.0 ** ((rb - ra) / 400.0))
+
+
+def dominant_color(flag_url: str) -> str:
+    """Couleur dominante d'un drapeau (flagcdn.com + Pillow).
+
+    Filtre les couleurs trop claires (blanc) ou trop sombres (noir),
+    non lisibles sur le fond sombre de la BCR.
+    """
+    with urllib.request.urlopen(flag_url) as r:
+        data = r.read()
+    img = Image.open(io.BytesIO(data)).convert("RGB").resize((50, 50))
+    colors = img.getcolors(maxcolors=2500)
+    if not colors:
+        return "#64748b"
+
+    def luma(rgb: tuple) -> float:
+        return (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
+
+    # Exclure les pixels trop clairs (fond blanc) ou trop sombres (fond noir)
+    filtered = [(cnt, rgb) for cnt, rgb in colors if 0.12 < luma(rgb) < 0.82]
+    if not filtered:
+        filtered = colors  # fallback si le drapeau est monochrome
+    r, g, b = max(filtered, key=lambda c: c[0])[1]
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def load_flag_colors(
+    teams: list[str],
+    iso_map: dict[str, str],
+    conf_map: dict[str, str],
+) -> dict[str, str]:
+    """Charge les couleurs dominantes de drapeaux depuis le cache ou les recalcule."""
+    cache_path = ROOT / "data" / "flag_colors.json"
+    if cache_path.exists():
+        with open(cache_path, encoding="utf-8") as f:
+            cached = json.load(f)
+        if all(t in cached for t in teams):
+            return cached
+
+    print("  Téléchargement des drapeaux (flagcdn.com) et calcul des couleurs…")
+    result: dict[str, str] = {}
+    for team in teams:
+        iso = iso_map.get(team)
+        fallback = CONF_COLORS.get(conf_map.get(team, ""), "#64748b")
+        if not iso:
+            result[team] = fallback
+            print(f"    {team}: pas de code ISO → conf")
+            continue
+        url = f"https://flagcdn.com/w80/{iso}.png"
+        try:
+            result[team] = dominant_color(url)
+            print(f"    {team}: {result[team]}")
+        except Exception as e:
+            result[team] = fallback
+            print(f"    ⚠ {team}: {e!r} → conf")
+
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2, ensure_ascii=False)
+    print(f"  Cache sauvegardé → {cache_path.name}")
+    return result
 
 
 def build_snapshots(wc_teams: set) -> dict[str, dict]:
@@ -147,7 +227,12 @@ def main():
     # T3-1 — Noms abrégés (réduit la marge blanche à gauche)
     df.rename(columns=SHORT_NAMES, inplace=True)
     TEAM_CONF_SHORT = {SHORT_NAMES.get(k, k): v for k, v in TEAM_CONF.items()}
-    colors = [CONF_COLORS.get(TEAM_CONF_SHORT.get(col, ""), "#64748b") for col in df.columns]
+    TEAM_ISO_SHORT  = {SHORT_NAMES.get(k, k): v for k, v in TEAM_ISO.items()}
+
+    # T6 — Couleurs dominantes par drapeau (avec cache data/flag_colors.json)
+    flag_colors = load_flag_colors(list(df.columns), TEAM_ISO_SHORT, TEAM_CONF_SHORT)
+    colors = [flag_colors.get(col, CONF_COLORS.get(TEAM_CONF_SHORT.get(col, ""), "#64748b"))
+              for col in df.columns]
 
     print("\n⬡ Génération de l'animation …")
 

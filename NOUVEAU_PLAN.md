@@ -712,6 +712,26 @@ def dominant_color(flag_url: str) -> str:
 
 > ⚠️ Cette phase est complexe (incompatible avec bar_chart_race standard). Prototyper d'abord sur 10 frames avant de committer l'approche.
 
+### T6-FINAL — Régénération des deux BCR (après validation T6)
+
+Une fois les couleurs de drapeau intégrées dans `generate_elo_race.py`, régénérer les deux animations dans l'ordre :
+
+```bash
+# 1. BCR Elo (avec drapeaux + couleurs dominantes)
+python3 generate_elo_race.py --test   # valider visuellement sur 5 ans
+python3 generate_elo_race.py          # génération complète (~5 min)
+ls -lh data/elo_race.mp4
+
+# 2. BCR FIFA (noms abrégés + vitesse déjà corrigés en T5)
+python3 generate_fifa_race.py --test  # valider visuellement sur 10 ans
+python3 generate_fifa_race.py         # génération complète (~3 min)
+ls -lh data/fifa_race.mp4
+
+git add data/elo_race.mp4 data/fifa_race.mp4 generate_elo_race.py generate_fifa_race.py
+git commit -m "fix: régénération BCR Elo + FIFA — couleurs drapeaux (T6)"
+git fetch origin master && git merge origin/master --no-edit && git push
+```
+
 ---
 
 ## Tier 7 — Maintenance Python (après le tournoi)
