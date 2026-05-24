@@ -238,7 +238,7 @@ async function init() {
 
 // ── Router ───────────────────────────────────────────────────────────
 function route() {
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, behavior: 'instant' });
   const hash = location.hash.slice(1) || '/';
   setActiveNav(hash);
 
