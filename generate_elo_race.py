@@ -71,6 +71,27 @@ TEAM_ISO = {
     "United States": "us", "Uruguay": "uy", "Uzbekistan": "uz",
 }
 
+# Couleurs maillot domicile par équipe
+JERSEY_COLORS = {
+    "Spain": "#C62828", "Argentina": "#6EC6FF", "France": "#1D4ED8",
+    "England": "#F5F5F5", "Brazil": "#EAB308", "Portugal": "#9B1C1C",
+    "Colombia": "#FACC15", "Netherlands": "#F97316", "Ecuador": "#D4A017",
+    "Germany": "#E5E7EB", "Morocco": "#B91C1C", "Japan": "#2563EB",
+    "Croatia": "#DC2626", "Mexico": "#15803D", "Uruguay": "#7DD3FC",
+    "Turkey": "#DC2626", "Senegal": "#16A34A", "Belgium": "#DC2626",
+    "Switzerland": "#DC2626", "Australia": "#D4A017", "Norway": "#DC2626",
+    "Paraguay": "#DC2626", "Iran": "#F3F4F6", "Canada": "#DC2626",
+    "Austria": "#DC2626", "South Korea": "#DC2626", "Algeria": "#16A34A",
+    "Panama": "#DC2626", "Uzbekistan": "#2563EB", "United States": "#1E3A8A",
+    "Egypt": "#DC2626", "Scotland": "#1E40AF", "Ivory Coast": "#EA580C",
+    "Sweden": "#FACC15", "Jordan": "#DC2626", "Czech Republic": "#DC2626",
+    "Iraq": "#15803D", "DR Congo": "#38BDF8", "New Zealand": "#111827",
+    "Tunisia": "#DC2626", "Saudi Arabia": "#15803D", "Haiti": "#2563EB",
+    "South Africa": "#CA8A04", "Cape Verde": "#2563EB",
+    "Bosnia and Herzegovina": "#2563EB", "Qatar": "#7C2D5C",
+    "Ghana": "#F9FAFB", "Curaçao": "#2563EB",
+}
+
 # Noms abrégés pour les barres (réduit la marge blanche à gauche)
 SHORT_NAMES = {
     "Bosnia and Herzegovina": "Bosnia",
@@ -227,11 +248,9 @@ def main():
     # T3-1 — Noms abrégés (réduit la marge blanche à gauche)
     df.rename(columns=SHORT_NAMES, inplace=True)
     TEAM_CONF_SHORT = {SHORT_NAMES.get(k, k): v for k, v in TEAM_CONF.items()}
-    TEAM_ISO_SHORT  = {SHORT_NAMES.get(k, k): v for k, v in TEAM_ISO.items()}
-
-    # T6 — Couleurs dominantes par drapeau (avec cache data/flag_colors.json)
-    flag_colors = load_flag_colors(list(df.columns), TEAM_ISO_SHORT, TEAM_CONF_SHORT)
-    colors = [flag_colors.get(col, CONF_COLORS.get(TEAM_CONF_SHORT.get(col, ""), "#64748b"))
+    # T6 — Couleurs maillot (fallback : couleur confédération)
+    JERSEY_SHORT = {SHORT_NAMES.get(k, k): v for k, v in JERSEY_COLORS.items()}
+    colors = [JERSEY_SHORT.get(col, CONF_COLORS.get(TEAM_CONF_SHORT.get(col, ""), "#64748b"))
               for col in df.columns]
 
     print("\n⬡ Génération de l'animation …")
@@ -245,7 +264,7 @@ def main():
         fixed_order=False,
         fixed_max=False,
         steps_per_period=8,
-        period_length=500,
+        period_length=667,
         interpolate_period=True,
         label_bars=True,
         bar_size=0.85,

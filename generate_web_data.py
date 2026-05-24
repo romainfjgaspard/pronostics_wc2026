@@ -15,7 +15,7 @@ TEAM_ISO2 = {
     'Chile':'cl','Paraguay':'py','Bolivia':'bo','Peru':'pe','Venezuela':'ve',
     'Mexico':'mx','United States':'us','Canada':'ca','Honduras':'hn','Panama':'pa',
     'Costa Rica':'cr','Jamaica':'jm','Cuba':'cu','Haiti':'ht','Guatemala':'gt',
-    'El Salvador':'sv','Trinidad and Tobago':'tt',
+    'El Salvador':'sv','Trinidad and Tobago':'tt','Curaçao':'cw',
     'Germany':'de','France':'fr','Spain':'es','Portugal':'pt','Netherlands':'nl',
     'Belgium':'be','Italy':'it','England':'gb-eng','Switzerland':'ch','Croatia':'hr',
     'Denmark':'dk','Poland':'pl','Sweden':'se','Norway':'no','Austria':'at',
