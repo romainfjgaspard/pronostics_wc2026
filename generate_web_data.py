@@ -5,6 +5,7 @@ Exécuter depuis pronostics_wc2026/
 """
 import csv, json, os, re, unicodedata
 from collections import defaultdict
+from datetime import datetime
 
 DATA_DIR    = "data"
 WEB_DATA    = "data"
@@ -84,6 +85,51 @@ def compute_elo(matches: list) -> dict:
         elo[h] += k * (sa - ea)
         elo[a] += k * ((1 - sa) - (1 - ea))
     return dict(elo)
+
+def compute_elo_history(matches: list, qualified_teams: set) -> list:
+    """Retourne les snapshots annuels du classement Elo des équipes qualifiées."""
+    elo = defaultdict(lambda: 1500.0)
+    snapshots = []
+    current_year = None
+
+    for m in sorted(matches, key=lambda x: x['date']):
+        year = int(m['date'][:4])
+        if current_year is not None and year != current_year:
+            ranking = sorted(
+                [(t, round(elo[t])) for t in qualified_teams],
+                key=lambda x: -x[1]
+            )
+            snapshots.append({
+                'year': current_year,
+                'rankings': [{'name': name, 'elo': score, 'rank': i + 1}
+                             for i, (name, score) in enumerate(ranking)]
+            })
+        current_year = year
+
+        h, a = m['home_team'], m['away_team']
+        try:
+            hs, as_ = int(m['home_score']), int(m['away_score'])
+        except (ValueError, TypeError):
+            continue
+        neutral = str(m.get('neutral', 'FALSE')).upper() == 'TRUE'
+        ha = 0 if neutral else 75
+        k  = get_k(m.get('tournament', ''))
+        ea = elo_exp(elo[h] + ha, elo[a])
+        sa = 1.0 if hs > as_ else (0.5 if hs == as_ else 0.0)
+        elo[h] += k * (sa - ea)
+        elo[a] += k * ((1 - sa) - (1 - ea))
+
+    if current_year:
+        ranking = sorted(
+            [(t, round(elo[t])) for t in qualified_teams],
+            key=lambda x: -x[1]
+        )
+        snapshots.append({
+            'year': current_year,
+            'rankings': [{'name': name, 'elo': score, 'rank': i + 1}
+                         for i, (name, score) in enumerate(ranking)]
+        })
+    return snapshots
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def load_csv(path):
@@ -305,6 +351,17 @@ def main():
     save_json(teams_out,    os.path.join(WEB_DATA, 'teams.json'))
     save_json(groups_out,   os.path.join(WEB_DATA, 'groups.json'))
     save_json(rankings_out, os.path.join(WEB_DATA, 'rankings.json'))
+
+    # Snapshots Elo annuels
+    qualified_set = set(t2g.keys())
+    elo_history_snapshots = compute_elo_history(history, qualified_set)
+    elo_history = {
+        'generated_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
+        'count': len(elo_history_snapshots),
+        'snapshots': elo_history_snapshots,
+    }
+    save_json(elo_history, os.path.join(WEB_DATA, 'elo_ranking_history.json'))
+
     print(f"\n✅ Données prêtes dans {WEB_DATA}/")
 
 if __name__ == '__main__':

@@ -53,7 +53,7 @@ const I18N = {
     no_h2h: 'Aucune confrontation directe trouvée',
     form_of: (name) => `Forme récente — ${name}`,
     elo_h1: 'Classement Elo — 48 équipes',
-    elo_sub: 'Score de forme calculé sur l\'historique complet des matchs internationaux (depuis 1872)',
+    elo_sub: 'Indicateur de niveau calculé sur l\'historique complet des matchs internationaux depuis 1872',
     elo_info: "L'Elo est un indicateur de niveau calculé sur l'ensemble de l'histoire du football international (depuis 1872). Il intègre WC 2022, Euro 2024, Copa América 2024, qualifications, matchs amicaux et bien plus. Il reflète la valeur globale des équipes, pas uniquement leur forme récente.",
     th_team: 'Équipe',    th_group: 'Groupe',  th_elo_score: 'Score Elo',
     fifa_h1: 'Classement FIFA Masculin',
@@ -120,7 +120,7 @@ const I18N = {
     no_h2h: 'No head-to-head matches found',
     form_of: (name) => `Recent form — ${name}`,
     elo_h1: 'Elo Ranking — 48 teams',
-    elo_sub: 'Form score calculated from the complete history of international football (since 1872)',
+    elo_sub: 'Level indicator based on the complete history of international football since 1872',
     elo_info: 'Elo is a performance indicator calculated from the entire history of international football (since 1872). It includes WC 2022, Euro 2024, Copa América 2024, qualifications, friendlies, and much more. It reflects the overall level of teams, not just recent form.',
     th_team: 'Team',    th_group: 'Group',  th_elo_score: 'Elo Score',
     fifa_h1: "Men's FIFA Ranking",
@@ -325,6 +325,12 @@ async function ensureFifaHistory() {
   DATA.fifaHistory = await fetch('./data/fifa_ranking_history.json').then(r => r.json());
 }
 
+// ── Elo history lazy loader ───────────────────────────────────────────
+async function ensureEloHistory() {
+  if (DATA.eloHistory) return;
+  DATA.eloHistory = await fetch('./data/elo_ranking_history.json').then(r => r.json());
+}
+
 // ── Router ───────────────────────────────────────────────────────────
 async function route() {
   navToken++;
@@ -340,7 +346,7 @@ async function route() {
   } else if (hash === '/teams') {
     await renderTeams();
   } else if (hash === '/rankings') {
-    renderRankings();
+    await renderRankings();
   } else if (hash === '/fifa-ranking') {
     renderFifaRankings();
   } else if (hash === '/data') {
@@ -1095,11 +1101,12 @@ async function renderCompare(slug1, slug2) {
 }
 
 // ── VIEW: Classement Elo (48 équipes WC) ─────────────────────────────
-function renderRankings() {
+async function renderRankings() {
   const app = document.getElementById('app');
+  const myToken = navToken;
   const maxElo = DATA.rankings[0]?.elo || 1800;
 
-  const rows = DATA.rankings.map((tk, i) => {
+  const initialRows = DATA.rankings.map((tk, i) => {
     const barW = Math.round((tk.elo / maxElo) * 100);
     const rankClass = i < 3 ? `rank-${i + 1}` : '';
     return `<tr class="${rankClass}">
@@ -1116,82 +1123,18 @@ function renderRankings() {
     </tr>`;
   }).join('');
 
-  const explainer = LANG === 'en' ? `
-    <div class="elo-explainer">
-      <p class="elo-explainer-intro">
-        Elo is a rating system originally invented for chess and widely used in sports to measure relative strength.
-        Each team starts at <strong>1,500 points</strong>. After each match, points are redistributed between the two
-        teams based on the result and the Elo gap between them — beating a stronger opponent earns more points than
-        beating a weaker one.
-      </p>
-      <div class="elo-explainer-cols">
-        <div>
-          <h4>K-factors — match importance</h4>
-          <table class="elo-kfactor-table">
-            <tr><td>FIFA World Cup</td><td>×60</td></tr>
-            <tr><td>Euro, Copa América, AFCON, Asian Cup</td><td>×50</td></tr>
-            <tr><td>Qualifiers, Nations League</td><td>×35</td></tr>
-            <tr><td>Friendlies</td><td>×20</td></tr>
-          </table>
-        </div>
-        <div>
-          <h4>Other parameters</h4>
-          <ul class="elo-params">
-            <li>Home advantage: <strong>+75 pts</strong> (neutralized on neutral ground)</li>
-            <li>Starting score: <strong>1,500</strong> per team</li>
-            <li>Dataset: <strong>49,329 matches</strong> — complete history since 1872</li>
-          </ul>
-          <p class="elo-note">This ranking reflects the overall level of teams across their entire history. Unlike the FIFA ranking, it goes all the way back to 1872 and gives more weight to high-stakes matches.</p>
-        </div>
-      </div>
-    </div>
-  ` : `
-    <div class="elo-explainer">
-      <p class="elo-explainer-intro">
-        L'Elo est un système de classement inventé pour les échecs et adapté à de nombreux sports pour mesurer
-        le niveau relatif des équipes. Chaque équipe démarre à <strong>1 500 points</strong>. Après chaque match,
-        des points sont échangés entre les deux équipes selon le résultat et leur écart d'Elo — battre une équipe
-        plus forte rapporte davantage que battre une équipe plus faible.
-      </p>
-      <div class="elo-explainer-cols">
-        <div>
-          <h4>K-facteurs — importance des matchs</h4>
-          <table class="elo-kfactor-table">
-            <tr><td>Coupe du Monde FIFA</td><td>×60</td></tr>
-            <tr><td>Euro, Copa América, CAN, Coupe d'Asie</td><td>×50</td></tr>
-            <tr><td>Qualifications, Nations League</td><td>×35</td></tr>
-            <tr><td>Matchs amicaux</td><td>×20</td></tr>
-          </table>
-        </div>
-        <div>
-          <h4>Autres paramètres</h4>
-          <ul class="elo-params">
-            <li>Avantage domicile : <strong>+75 pts</strong> (annulé sur terrain neutre)</li>
-            <li>Score initial : <strong>1 500</strong> par équipe</li>
-            <li>Base : <strong>49 329 matchs</strong> — historique complet depuis 1872</li>
-          </ul>
-          <p class="elo-note">Ce classement reflète le niveau global des équipes sur toute leur histoire. Contrairement au classement FIFA, il remonte jusqu'en 1872 et pondère davantage les matchs à enjeu élevé.</p>
-        </div>
-      </div>
-    </div>
-  `;
+  const explainerHtml = `
+    <p style="text-align:center;margin-bottom:20px;font-size:.85rem;color:var(--muted)">
+      ${LANG === 'fr'
+        ? '→ <a href="#/data" style="color:var(--accent)">Voir le détail du calcul Elo (page Données)</a>'
+        : '→ <a href="#/data" style="color:var(--accent)">See Elo calculation details (Data page)</a>'}
+    </p>`;
 
   app.innerHTML = `
     <div class="page-header">
       <h1>${t('elo_h1')}</h1>
       <p>${t('elo_sub')}</p>
-      <a href="#elo-race-video" class="race-anchor">
-        ▶ ${LANG === 'fr' ? "Voir l'évolution historique" : 'See historical evolution'}
-      </a>
-    </div>
-    ${explainer}
-    <div class="table-wrap">
-      <table class="rankings-table">
-        <thead><tr>
-          <th>#</th><th></th><th>${t('th_team')}</th><th>${t('th_group')}</th><th>${t('th_elo_score')}</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      ${explainerHtml}
     </div>
     <div class="race-section">
       <h2 style="margin-bottom:8px">
@@ -1212,6 +1155,23 @@ function renderRankings() {
              src="./data/elo_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
+    </div>
+    <div class="fifa-controls">
+      <label class="fifa-year-label" for="elo-year-slider">
+        ${LANG === 'fr' ? 'Année' : 'Year'} :
+      </label>
+      <span id="elo-year-display" style="font-weight:700;color:var(--text);min-width:40px">2025</span>
+      <input type="range" id="elo-year-slider"
+             min="1872" max="2025" step="1" value="2025"
+             style="flex:1;max-width:260px;accent-color:var(--accent)">
+    </div>
+    <div class="table-wrap">
+      <table class="rankings-table">
+        <thead><tr>
+          <th>#</th><th></th><th>${t('th_team')}</th><th>${t('th_group')}</th><th>${t('th_elo_score')}</th>
+        </tr></thead>
+        <tbody id="elo-table-body">${initialRows}</tbody>
+      </table>
     </div>`;
 
   const video = app.querySelector('#elo-race-video');
@@ -1221,6 +1181,46 @@ function renderRankings() {
       app.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     });
+  });
+
+  await ensureEloHistory();
+  if (navToken !== myToken) return;
+
+  const sliderEl  = document.getElementById('elo-year-slider');
+  const displayEl = document.getElementById('elo-year-display');
+  if (!sliderEl) return;
+
+  sliderEl.addEventListener('input', () => {
+    const year     = parseInt(sliderEl.value, 10);
+    const tbody    = document.getElementById('elo-table-body');
+    const snapshot = DATA.eloHistory?.snapshots?.find(s => s.year === year)
+      || DATA.eloHistory?.snapshots?.reduce((prev, curr) =>
+          Math.abs(curr.year - year) < Math.abs(prev.year - year) ? curr : prev);
+    if (!snapshot) return;
+    displayEl.textContent = String(snapshot.year);
+    const maxE = snapshot.rankings[0]?.elo || 1800;
+    tbody.innerHTML = snapshot.rankings.map((tk, i) => {
+      const barW      = Math.round((tk.elo / maxE) * 100);
+      const rankClass = i < 3 ? `rank-${i + 1}` : '';
+      const wctk      = DATA.rankings.find(r => r.name === tk.name);
+      const iso2      = wctk?.iso2 || '';
+      const slug      = wctk?.slug || '';
+      const nameHtml  = slug
+        ? `<a href="#/team/${encodeURIComponent(slug)}">${dn(tk.name)}</a>`
+        : dn(tk.name);
+      return `<tr class="${rankClass}">
+        <td class="rank-num">${tk.rank}</td>
+        <td>${flagImg(iso2, tk.name, 'flag-sm')}</td>
+        <td>${nameHtml}</td>
+        <td style="color:var(--muted)"></td>
+        <td>
+          <div class="elo-bar-wrap">
+            <div class="elo-bar" style="width:${barW}px;max-width:160px"></div>
+            <span class="elo-num">${tk.elo}</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
   });
 }
 

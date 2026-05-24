@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 5 FIFA ranking)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6–P10 à faire (PLAN_CORRECTIONS.md)
+**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 6 Elo ranking)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7–P10 à faire (PLAN_CORRECTIONS.md)
 
 ---
 
@@ -468,6 +468,41 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 
 ---
 
+### Session 2026-05-25 (partie 6) — Phase 6 : Classement Elo — entête + BCR en haut + slider année
+
+**Fichiers modifiés :** `app.js`, `generate_web_data.py`
+**Fichier créé :** `data/elo_ranking_history.json` (301 KB, 155 snapshots 1872–2026)
+
+**6.1 — Raccourcir l'en-tête (app.js) :**
+- `elo_sub` FR : `'Score de forme calculé…'` → `'Indicateur de niveau calculé…'`
+- `elo_sub` EN : `'Form score calculated…'` → `'Level indicator based on…'`
+- Bloc `explainer` (~60 lignes, `.elo-explainer` avec K-facteurs) → `explainerHtml` (4 lignes, lien vers page Données)
+- Lien anchor `<a href="#elo-race-video">` supprimé du page-header
+
+**6.2 — BCR vidéo en haut (app.js) :**
+- `.race-section` déplacée avant `.table-wrap` (était après)
+- Structure : `page-header → race-section → elo-controls → table-wrap`
+
+**6.3 — Snapshots Elo annuels (generate_web_data.py) :**
+- Import `datetime` ajouté
+- `compute_elo_history(matches, qualified_teams)` ajoutée après `compute_elo()` : snapshots annuels des 48 équipes qualifiées
+- Appel dans `main()` après `save_json(rankings_out, ...)` → génère `data/elo_ranking_history.json`
+- 155 snapshots (1872–2026), 48 équipes par snapshot
+
+**6.4 — Slider année 1872–2025 (app.js) :**
+- `ensureEloHistory()` ajoutée après `ensureFifaHistory()` (même pattern)
+- `renderRankings()` passée en `async`
+- `route()` : `renderRankings()` → `await renderRankings()`
+- Slider `#elo-year-slider` (min=1872, max=2025) + affichage `#elo-year-display`
+- Réutilise `.fifa-controls` + `.fifa-year-label` (pas de nouveau CSS)
+- Listener `input` : cherche snapshot exact, fallback `reduce` si absent ; affiche `dn(name)` avec lien équipe si slug disponible
+
+**Validation :**
+- `data/elo_ranking_history.json` : 155 snapshots, premier 1872 (England #1), dernier 2026 (Spain #1)
+- `python3 generate_web_data.py` : génère les 5 JSON sans erreur
+
+---
+
 ### Session 2026-05-25 (partie 2) — Analyse terrain + plan de corrections UI/UX
 
 **Contexte :** Analyse manuelle complète du site (PC + mobile) → 11 points de correction identifiés.
@@ -538,4 +573,5 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 | **P3** | Onglet Matchs : `proba-note` retirée de chaque match card, déplacée dans l'en-tête avec lien vers Classement Elo | ✅ Fait (2026-05-25) |
 | **P4** | Équipes : `init()` charge `fifa_ranking.json` au boot (map iso2→rang), contrôles en flex-row, colonne FIFA cliquable | ✅ Fait (2026-05-25) |
 | **P5** | FIFA ranking : noms FR (`dn()`), select → slider (1992–2026), BCR vidéo déplacée en haut | ✅ Fait (2026-05-25) |
-| **P6–P10** | Elo ranking, données, équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
+| **P6** | Elo ranking : `elo_sub` raccourci, explainer → lien Données, BCR en haut, slider 1872–2025, `elo_ranking_history.json` (155 snapshots) | ✅ Fait (2026-05-25) |
+| **P7–P10** | Données, équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
