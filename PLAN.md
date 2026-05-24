@@ -919,7 +919,7 @@ git push
 | 1 | Fix matchs depuis 1872 (fiches équipes) | `app.js`, `data/teams.json` | ✅ |
 | 2 | Slider années — fiche équipe | `app.js`, `style.css` | ⬜ |
 | 3 | Slider années — page équipes + comparaison | `app.js` | ⬜ |
-| 4 | Bar Chart Race Elo depuis 1872 | `generate_elo_race.py`, `app.js`, `style.css`, `data/elo_race.mp4` | ⬜ |
+| 4 | Bar Chart Race Elo depuis 1872 | `generate_elo_race.py`, `app.js`, `style.css`, `data/elo_race.gif` | ✅ |
 | 5 | Améliorations diverses (+ fix nav mobile + fix toggle FR/EN mobile) | `app.js`, `style.css` | ⬜ |
 
 ---
