@@ -857,11 +857,51 @@ Puis dans `renderTeam`, `renderTeams`, `renderCompare` : appeler `await ensureTe
 
 **Note** : ce changement est optionnel et un peu plus complexe à mettre en place. Ne le faire que si les performances sur mobile sont vraiment perçues comme lentes.
 
+### 5.4 — Fix mobile : onglet "Données" inaccessible
+
+Sur mobile, l'onglet "Données" (`#/data`) n'est pas accessible dans la nav. Probable débordement horizontal de la barre de navigation sur petits écrans.
+
+**Diagnostic** : inspecter `.nav` dans `style.css` — si `overflow: hidden` ou `white-space: nowrap` sans scroll, les liens en bout de liste sont masqués.
+
+**Fix suggéré** : autoriser le scroll horizontal sur la nav mobile, ou passer à un menu hamburger, ou utiliser `flex-wrap: wrap` :
+```css
+/* Option 1 — scroll horizontal (minimal) */
+nav .nav-links {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+nav .nav-links::-webkit-scrollbar { display: none; }
+
+/* Option 2 — retour à la ligne */
+nav .nav-links {
+  flex-wrap: wrap;
+}
+```
+
+### 5.5 — Fix mobile : toggle FR/EN inaccessible
+
+Le bouton de bascule langue FR/EN n'est pas accessible sur mobile (probablement masqué hors écran ou trop petit).
+
+**Diagnostic** : vérifier `.lang-btn` et son conteneur dans `style.css` — position absolue ou fixed peut causer un débordement sur petits écrans.
+
+**Fix suggéré** : s'assurer que le toggle est dans le flux de la page ou accessible via scroll, et que la taille de clic est ≥ 44×44px (recommandation mobile) :
+```css
+.lang-switcher {
+  /* s'assurer qu'il est visible sur mobile */
+  flex-shrink: 0;
+}
+.lang-btn {
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+```
+
 ### Commit Phase 5
 
 ```bash
 git add app.js style.css
-git commit -m "feat: traductions FR complètes, H2H résumé W/D/L, optimisations"
+git commit -m "feat: traductions FR complètes, H2H résumé W/D/L, fix nav mobile"
 git fetch origin main && git merge origin/main --no-edit
 git push
 ```
@@ -876,7 +916,7 @@ git push
 | 2 | Slider années — fiche équipe | `app.js`, `style.css` | ⬜ |
 | 3 | Slider années — page équipes + comparaison | `app.js` | ⬜ |
 | 4 | Bar Chart Race Elo depuis 1872 | `generate_elo_race.py`, `app.js`, `style.css`, `data/elo_race.mp4` | ⬜ |
-| 5 | Améliorations diverses | `app.js`, `style.css` | ⬜ |
+| 5 | Améliorations diverses (+ fix nav mobile + fix toggle FR/EN mobile) | `app.js`, `style.css` | ⬜ |
 
 ---
 
