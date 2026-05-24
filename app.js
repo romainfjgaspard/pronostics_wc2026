@@ -276,6 +276,7 @@ let teamsQualifsMode = false;
 let cmpYearMin = 1872;
 let cmpYearMax = 2026;
 let cmpQualifsMode = false;
+let navToken = 0;
 
 // ── Init ─────────────────────────────────────────────────────────────
 async function init() {
@@ -299,6 +300,7 @@ async function init() {
 
 // ── Router ───────────────────────────────────────────────────────────
 function route() {
+  navToken++;
   window.scrollTo({ top: 0, behavior: 'instant' });
   const hash = location.hash.slice(1) || '/';
   setActiveNav(hash);
@@ -505,6 +507,9 @@ function renderFixtures() {
 
 // ── VIEW: Team ────────────────────────────────────────────────────────
 function renderTeam(slug) {
+  teamYearMin = 1872;
+  teamYearMax = 2026;
+  teamQualifsMode = false;
   const app  = document.getElementById('app');
   const team = DATA.teams[slug];
 
@@ -713,12 +718,16 @@ function renderTeams() {
   const maxSl = app.querySelector('#year-max-teams');
   const qualBtn = app.querySelector('#btn-qualifs-teams');
   const searchInput = app.querySelector('#teams-search');
+  let teamsSliderTimer = null;
 
   function onYearChange() {
     teamsQualifsMode = false;
     qualBtn?.classList.remove('active');
-    renderTeamsBody(searchInput?.value || '');
-    updateTeamsSortHeaders();
+    clearTimeout(teamsSliderTimer);
+    teamsSliderTimer = setTimeout(() => {
+      renderTeamsBody(searchInput?.value || '');
+      updateTeamsSortHeaders();
+    }, 60);
   }
 
   minSl?.addEventListener('input', () => {
@@ -1099,6 +1108,9 @@ function renderRankings() {
     <div class="page-header">
       <h1>${t('elo_h1')}</h1>
       <p>${t('elo_sub')}</p>
+      <a href="#elo-race-video" class="race-anchor">
+        ▶ ${LANG === 'fr' ? "Voir l'évolution historique" : 'See historical evolution'}
+      </a>
     </div>
     ${explainer}
     <div class="table-wrap">
@@ -1118,21 +1130,38 @@ function renderRankings() {
           ? 'Animation Bar Chart Race — scores Elo annuels des 48 équipes qualifiées pour la Coupe du Monde 2026.'
           : 'Bar Chart Race animation — annual Elo scores for the 48 WC 2026 qualified teams.'}
       </p>
-      <video class="elo-race-video" autoplay loop muted playsinline
+      <div class="race-speed-btns">
+        <span style="font-size:.8rem;color:var(--muted)">${LANG === 'fr' ? 'Vitesse' : 'Speed'} :</span>
+        <button class="speed-btn active" data-rate="1">1×</button>
+        <button class="speed-btn" data-rate="1.5">1.5×</button>
+        <button class="speed-btn" data-rate="2">2×</button>
+      </div>
+      <video class="elo-race-video" id="elo-race-video" autoplay loop muted playsinline controls
              src="./data/elo_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
     </div>`;
+
+  const video = app.querySelector('#elo-race-video');
+  app.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (video) video.playbackRate = parseFloat(btn.dataset.rate);
+      app.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
 }
 
 // ── VIEW: Classement FIFA ─────────────────────────────────────────────
 async function renderFifaRankings() {
   const app = document.getElementById('app');
+  const myToken = navToken;
   app.innerHTML = `<div class="splash"><div class="spinner"></div><p>${t('fifa_loading')}</p></div>`;
 
   let data;
   try {
     data = await fetch('./data/fifa_ranking.json').then(r => r.json());
+    if (navToken !== myToken) return;
   } catch (e) {
     app.innerHTML = `
       <div class="page-header"><h1>${t('fifa_h1')}</h1></div>
@@ -1308,6 +1337,22 @@ function renderData() {
       <h3>${t('sources_h3')}</h3>
       ${sourcesHtml}
     </div>`;
+}
+
+// ── Share ─────────────────────────────────────────────────────────────
+function sharesite() {
+  const url = 'https://romainfjgaspard.github.io/pronostics_wc2026/';
+  if (navigator.share) {
+    navigator.share({
+      title: 'WC 2026 — Données & Statistiques',
+      text: 'Stats CDM 2026 : Elo depuis 1872, classements FIFA, comparaisons équipes',
+      url,
+    });
+  } else {
+    navigator.clipboard.writeText(url);
+    const btn = document.getElementById('share-btn');
+    if (btn) { btn.textContent = '✓'; setTimeout(() => btn.textContent = '🔗', 2000); }
+  }
 }
 
 // ── Utility: slugify ─────────────────────────────────────────────────

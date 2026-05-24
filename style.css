@@ -297,6 +297,8 @@ img { display: block; }
 .year-slider {
   position: absolute;
   width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
@@ -674,11 +676,14 @@ img { display: block; }
    Vue Équipes — contrôles + tableau trié
 ───────────────────────────────────────────── */
 .teams-controls {
-  display: flex; flex-wrap: wrap; align-items: center;
-  gap: 12px; margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 20px;
 }
-.teams-controls .period-btns { flex-shrink: 0; }
-.teams-controls .slider-row  { flex-shrink: 0; }
+.teams-controls .year-slider-wrap { width: 100%; }
+.teams-controls .teams-search { align-self: flex-start; max-width: 280px; }
 .teams-search {
   flex: 1; min-width: 160px; max-width: 260px;
   padding: 6px 12px; border-radius: 6px;
@@ -850,6 +855,19 @@ img { display: block; }
 .proba-draw { background: var(--muted); }
 .proba-away { background: var(--loss); }
 .proba-note { font-size: .68rem; color: var(--muted); margin: 0 0 6px; text-align: center; }
+
+/* ─────────────────────────────────────────────
+   Vidéo BCR — contrôles vitesse + ancre
+───────────────────────────────────────────── */
+.race-speed-btns { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
+.speed-btn { padding: 4px 10px; border-radius: 20px; background: var(--surface); color: var(--muted); font-size: .78rem; border: 1px solid var(--border); cursor: pointer; }
+.speed-btn.active { background: rgba(34,197,94,.15); color: var(--win); border-color: var(--win); }
+.race-anchor { font-size: .85rem; color: var(--accent); margin-left: 12px; }
+
+/* ─────────────────────────────────────────────
+   Bouton partage natif
+───────────────────────────────────────────── */
+.share-btn { background: none; border: none; color: var(--text); font-size: 1rem; cursor: pointer; padding: 6px 8px; }
 
 @media (max-width: 700px) {
   .nav-link { padding: 5px 8px; font-size: .78rem; }
