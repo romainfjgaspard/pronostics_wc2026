@@ -281,13 +281,12 @@ let navToken = 0;
 // ── Init ─────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const [fixtures, teams, groups, rankings] = await Promise.all([
+    const [fixtures, groups, rankings] = await Promise.all([
       fetch('./data/fixtures.json').then(r => r.json()),
-      fetch('./data/teams.json').then(r => r.json()),
       fetch('./data/groups.json').then(r => r.json()),
       fetch('./data/rankings.json').then(r => r.json()),
     ]);
-    DATA = { fixtures, teams, groups, rankings };
+    DATA = { fixtures, teams: null, groups, rankings };
     initLang();
     window.addEventListener('hashchange', route);
     route();
@@ -298,20 +297,28 @@ async function init() {
   }
 }
 
+// ── Teams lazy loader ─────────────────────────────────────────────────
+async function ensureTeams() {
+  if (DATA.teams) return;
+  const appEl = document.getElementById('app');
+  appEl.innerHTML = `<div class="splash"><div class="spinner"></div><p>${LANG === 'fr' ? 'Chargement des équipes…' : 'Loading teams…'}</p></div>`;
+  DATA.teams = await fetch('./data/teams.json').then(r => r.json());
+}
+
 // ── Router ───────────────────────────────────────────────────────────
-function route() {
+async function route() {
   navToken++;
   window.scrollTo({ top: 0, behavior: 'instant' });
   const hash = location.hash.slice(1) || '/';
   setActiveNav(hash);
 
   if (hash.startsWith('/team/')) {
-    renderTeam(decodeURIComponent(hash.slice(6)));
+    await renderTeam(decodeURIComponent(hash.slice(6)));
   } else if (hash.startsWith('/compare/')) {
     const parts = hash.slice(9).split('/');
-    renderCompare(decodeURIComponent(parts[0] || ''), decodeURIComponent(parts[1] || ''));
+    await renderCompare(decodeURIComponent(parts[0] || ''), decodeURIComponent(parts[1] || ''));
   } else if (hash === '/teams') {
-    renderTeams();
+    await renderTeams();
   } else if (hash === '/rankings') {
     renderRankings();
   } else if (hash === '/fifa-ranking') {
@@ -506,10 +513,11 @@ function renderFixtures() {
 }
 
 // ── VIEW: Team ────────────────────────────────────────────────────────
-function renderTeam(slug) {
+async function renderTeam(slug) {
   teamYearMin = 1872;
   teamYearMax = 2026;
   teamQualifsMode = false;
+  await ensureTeams();
   const app  = document.getElementById('app');
   const team = DATA.teams[slug];
 
@@ -652,7 +660,8 @@ function buildMatchesTable(matches) {
 }
 
 // ── VIEW: Teams ───────────────────────────────────────────────────────
-function renderTeams() {
+async function renderTeams() {
+  await ensureTeams();
   const app = document.getElementById('app');
 
   const COL_DEFS = [
@@ -830,7 +839,8 @@ function updateTeamsSortHeaders() {
 }
 
 // ── VIEW: Compare ─────────────────────────────────────────────────────
-function renderCompare(slug1, slug2) {
+async function renderCompare(slug1, slug2) {
+  await ensureTeams();
   const app = document.getElementById('app');
   const t1  = DATA.teams[slug1];
   const t2  = DATA.teams[slug2];
