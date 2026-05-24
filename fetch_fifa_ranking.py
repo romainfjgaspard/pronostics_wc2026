@@ -102,7 +102,7 @@ def fetch_fdcp_ranking(date_id: str, date_str: str) -> tuple[list[dict], str] | 
     """Appelle l'API FDCP FIFA avec le dateId."""
     url = (
         f'{FDCP_BASE}/fifarankings/rankings/rankingsbyschedule'
-        f'?rankingScheduleId={date_id}&count=211&language=fr'
+        f'?rankingScheduleId={date_id}&count=211&language=en'
     )
     try:
         print(f"  API FDCP : {url}")

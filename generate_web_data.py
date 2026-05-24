@@ -56,6 +56,18 @@ def get_k(tournament: str) -> int:
 def elo_exp(ra, rb):
     return 1.0 / (1.0 + 10.0 ** ((rb - ra) / 400.0))
 
+def elo_prob(ra: float, rb: float) -> dict:
+    """Probabilités statistiques pour un match sur terrain neutre."""
+    exp_a = elo_exp(ra, rb)
+    draw = max(0.15, 0.27 - 0.001 * abs(ra - rb))
+    win_a = exp_a * (1 - draw)
+    win_b = (1 - exp_a) * (1 - draw)
+    return {
+        "home": round(win_a, 3),
+        "draw": round(draw, 3),
+        "away": round(win_b, 3),
+    }
+
 def compute_elo(matches: list) -> dict:
     elo = defaultdict(lambda: 1500.0)
     for m in sorted(matches, key=lambda x: x['date']):
@@ -229,12 +241,15 @@ def main():
     for f in wc26:
         h, a = f['home_team'], f['away_team']
         grp = t2g.get(h) or t2g.get(a) or '?'
+        elo_h = elo.get(h, 1500)
+        elo_a = elo.get(a, 1500)
         fixtures_out.append({
             'date':f['date'], 'stage':f['_stage'], 'stage_label':STAGE_NAMES.get(f['_stage'],''),
             'group':grp, 'home':h, 'away':a,
             'home_iso2':TEAM_ISO2.get(h,''), 'away_iso2':TEAM_ISO2.get(a,''),
-            'home_elo':round(elo.get(h,1500),0), 'away_elo':round(elo.get(a,1500),0),
+            'home_elo':round(elo_h, 0), 'away_elo':round(elo_a, 0),
             'city':f.get('city',''),
+            'proba': elo_prob(elo_h, elo_a),
         })
 
     # teams.json

@@ -453,6 +453,21 @@ function renderFixtures() {
     const matchesHtml = matches.map(m => {
       const s1 = encodeURIComponent(slugify(m.home));
       const s2 = encodeURIComponent(slugify(m.away));
+      let probaHtml = '';
+      const p = m.proba;
+      if (p) {
+        const titleFr = `Indicateur Elo — ${dn(m.home)} ${(p.home*100).toFixed(0)}% / Nul ${(p.draw*100).toFixed(0)}% / ${dn(m.away)} ${(p.away*100).toFixed(0)}%`;
+        const titleEn = `Elo indicator — ${dn(m.home)} ${(p.home*100).toFixed(0)}% / Draw ${(p.draw*100).toFixed(0)}% / ${dn(m.away)} ${(p.away*100).toFixed(0)}%`;
+        probaHtml = `
+          <div class="proba-bar" title="${LANG === 'fr' ? titleFr : titleEn}">
+            <div class="proba-seg proba-home" style="width:${(p.home*100).toFixed(0)}%">${(p.home*100).toFixed(0)}%</div>
+            <div class="proba-seg proba-draw" style="width:${(p.draw*100).toFixed(0)}%">${(p.draw*100).toFixed(0)}%</div>
+            <div class="proba-seg proba-away" style="width:${(p.away*100).toFixed(0)}%">${(p.away*100).toFixed(0)}%</div>
+          </div>
+          <p class="proba-note">⚡ ${LANG === 'fr'
+            ? "Indicateur Elo — terrain neutre, basé sur l'historique depuis 1872"
+            : 'Elo indicator — neutral ground, based on history since 1872'}</p>`;
+      }
       return `
         <div class="match-card match-card-link" onclick="location.hash='#/compare/${s1}/${s2}'">
           <div class="match-date">${formatDate(m.date)}${m.city ? ' · ' + m.city : ''}</div>
@@ -467,6 +482,7 @@ function renderFixtures() {
               <span>${dn(m.away)}</span>
             </div>
           </div>
+          ${probaHtml}
         </div>`;
     }).join('<hr style="border:none;border-top:1px solid var(--border);margin:4px 0">');
 

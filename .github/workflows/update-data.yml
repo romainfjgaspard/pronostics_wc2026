@@ -1,0 +1,36 @@
+name: Update data
+on:
+  schedule:
+    - cron: '0 7 * * 1'   # chaque lundi à 7h UTC (passer à '0 7 * * *' pendant la CDM 12 juin–19 juillet)
+  workflow_dispatch:        # déclenchement manuel possible
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch data
+        run: python3 fetch_data.py
+
+      - name: Fetch FIFA ranking
+        run: python3 fetch_fifa_ranking.py
+
+      - name: Generate web data
+        run: python3 generate_web_data.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "chore: mise à jour données $(date +%Y-%m-%d)"
+          git push
