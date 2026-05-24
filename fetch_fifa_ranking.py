@@ -1,7 +1,8 @@
 """
 fetch_fifa_ranking.py
 Récupère le classement FIFA masculin officiel (211 sélections).
-Source 1 : API interne FIFA (inside.fifa.com)
+Source 1 : API FDCP FIFA (api.fifa.com/api/v3/fifarankings/...)
+           — dateId extrait dynamiquement depuis inside.fifa.com/__NEXT_DATA__
 Source 2 : dataset GitHub cnc8/fifa-world-ranking (CSV historique, fallback)
 """
 
@@ -9,74 +10,59 @@ import csv
 import io
 import json
 import os
+import re
 import urllib.request
 import urllib.error
 from datetime import datetime
 
 OUTPUT = os.path.join("data", "fifa_ranking.json")
 
-# ── ISO2 codes ────────────────────────────────────────────────────────────────
-TEAM_ISO2 = {
-    'Argentina':'ar','Brazil':'br','Uruguay':'uy','Colombia':'co','Ecuador':'ec',
-    'Chile':'cl','Paraguay':'py','Bolivia':'bo','Peru':'pe','Venezuela':'ve',
-    'Mexico':'mx','United States':'us','Canada':'ca','Honduras':'hn','Panama':'pa',
-    'Costa Rica':'cr','Jamaica':'jm','Cuba':'cu','Haiti':'ht','Guatemala':'gt',
-    'El Salvador':'sv','Trinidad and Tobago':'tt','Curaçao':'cw','Suriname':'sr',
-    'Germany':'de','France':'fr','Spain':'es','Portugal':'pt','Netherlands':'nl',
-    'Belgium':'be','Italy':'it','England':'gb-eng','Switzerland':'ch','Croatia':'hr',
-    'Denmark':'dk','Poland':'pl','Sweden':'se','Norway':'no','Austria':'at',
-    'Czech Republic':'cz','Scotland':'gb-sct','Wales':'gb-wls','Serbia':'rs',
-    'Hungary':'hu','Romania':'ro','Turkey':'tr','Ukraine':'ua','Greece':'gr',
-    'Slovakia':'sk','Slovenia':'si','Bosnia and Herzegovina':'ba','Kosovo':'xk',
-    'Albania':'al','Finland':'fi','Iceland':'is','Republic of Ireland':'ie',
-    'Northern Ireland':'gb-nir','Georgia':'ge','Armenia':'am','Azerbaijan':'az',
-    'Moldova':'md','Montenegro':'me','North Macedonia':'mk','Bulgaria':'bg',
-    'Belarus':'by','Estonia':'ee','Latvia':'lv','Lithuania':'lt',
-    'Luxembourg':'lu','Cyprus':'cy','Andorra':'ad','Malta':'mt',
-    'Liechtenstein':'li','San Marino':'sm','Gibraltar':'gi','Faroe Islands':'fo',
-    'Morocco':'ma','Senegal':'sn','Nigeria':'ng','Cameroon':'cm','Ghana':'gh',
-    "Ivory Coast":'ci','Côte d\'Ivoire':'ci','Mali':'ml','Algeria':'dz',
-    'Egypt':'eg','Tunisia':'tn','South Africa':'za','DR Congo':'cd',
-    'Congo':'cg','Uganda':'ug','Kenya':'ke','Ethiopia':'et','Zambia':'zm',
-    'Zimbabwe':'zw','Angola':'ao','Guinea':'gn','Burkina Faso':'bf',
-    'Benin':'bj','Gabon':'ga','Comoros':'km','Cape Verde':'cv',
-    'Namibia':'na','Mozambique':'mz','Madagascar':'mg','Rwanda':'rw',
-    'Liberia':'lr','Tanzania':'tz','Malawi':'mw','Sudan':'sd','Libya':'ly',
-    'Mauritania':'mr','Niger':'ne','Togo':'tg','Sierra Leone':'sl',
-    'Japan':'jp','South Korea':'kr','Australia':'au','Iran':'ir',
-    'Saudi Arabia':'sa','Qatar':'qa','United Arab Emirates':'ae',
-    'Iraq':'iq','Syria':'sy','Uzbekistan':'uz','Jordan':'jo',
-    'Bahrain':'bh','Oman':'om','Palestine':'ps','China':'cn',
-    'Vietnam':'vn','Indonesia':'id','Thailand':'th','India':'in',
-    'Philippines':'ph','Malaysia':'my','Myanmar':'mm','Cambodia':'kh',
-    'Tajikistan':'tj','Kyrgyzstan':'kg','Kuwait':'kw','Lebanon':'lb',
-    'North Korea':'kp','Singapore':'sg','Pakistan':'pk',
-    'New Zealand':'nz','Fiji':'fj','Solomon Islands':'sb',
-    'Papua New Guinea':'pg','Tahiti':'pf','New Caledonia':'nc','Vanuatu':'vu',
-    'USA':'us',
+# ── Mapping FIFA 3-lettres → ISO2 (indépendant de la langue) ──────────────────
+# Source : codes FIFA officiels + ISO 3166-1 alpha-2
+FIFA_TO_ISO2 = {
+    'AFG':'af','AIA':'ai','ALB':'al','ALG':'dz','AND':'ad','ANG':'ao','ARG':'ar',
+    'ARM':'am','ARU':'aw','ASA':'as','ATG':'ag','AUS':'au','AUT':'at','AZE':'az',
+    'BAH':'bs','BAN':'bd','BDI':'bi','BEL':'be','BEN':'bj','BER':'bm','BFA':'bf',
+    'BHR':'bh','BHU':'bt','BIH':'ba','BLR':'by','BLZ':'bz','BOL':'bo','BOT':'bw',
+    'BRA':'br','BRB':'bb','BRU':'bn','BUL':'bg','CAM':'kh','CAN':'ca','CAY':'ky',
+    'CGO':'cg','CHA':'td','CHI':'cl','CHN':'cn','CIV':'ci','CMR':'cm','COD':'cd',
+    'COK':'ck','COL':'co','COM':'km','CPV':'cv','CRC':'cr','CRO':'hr','CTA':'cf',
+    'CUB':'cu','CUW':'cw','CYP':'cy','CZE':'cz','DEN':'dk','DJI':'dj','DMA':'dm',
+    'DOM':'do','ECU':'ec','EGY':'eg','ENG':'gb-eng','EQG':'gq','ERI':'er',
+    'ESP':'es','EST':'ee','ETH':'et','FIJ':'fj','FIN':'fi','FRA':'fr','FRO':'fo',
+    'GAB':'ga','GAM':'gm','GEO':'ge','GER':'de','GHA':'gh','GIB':'gi','GNB':'gw',
+    'GRE':'gr','GRN':'gd','GUA':'gt','GUI':'gn','GUM':'gu','GUY':'gy','HAI':'ht',
+    'HKG':'hk','HON':'hn','HUN':'hu','IDN':'id','IND':'in','IRL':'ie','IRN':'ir',
+    'IRQ':'iq','ISL':'is','ISR':'il','ITA':'it','JAM':'jm','JOR':'jo','JPN':'jp',
+    'KAZ':'kz','KEN':'ke','KGZ':'kg','KOR':'kr','KOS':'xk','KSA':'sa','KUW':'kw',
+    'LAO':'la','LBN':'lb','LBR':'lr','LBY':'ly','LCA':'lc','LES':'ls','LIE':'li',
+    'LTU':'lt','LUX':'lu','LVA':'lv','MAC':'mo','MAD':'mg','MAR':'ma','MAS':'my',
+    'MDA':'md','MDV':'mv','MEX':'mx','MKD':'mk','MLI':'ml','MLT':'mt','MNE':'me',
+    'MNG':'mn','MOZ':'mz','MRI':'mu','MSR':'ms','MTN':'mr','MWI':'mw','MYA':'mm',
+    'NAM':'na','NCA':'ni','NCL':'nc','NED':'nl','NEP':'np','NGA':'ng','NIG':'ne',
+    'NIR':'gb-nir','NOR':'no','NZL':'nz','OMA':'om','PAK':'pk','PAN':'pa',
+    'PAR':'py','PER':'pe','PHI':'ph','PLE':'ps','PNG':'pg','POL':'pl','POR':'pt',
+    'PRK':'kp','PUR':'pr','QAT':'qa','ROU':'ro','RSA':'za','RUS':'ru','RWA':'rw',
+    'SAM':'ws','SCO':'gb-sct','SDN':'sd','SEN':'sn','SEY':'sc','SGP':'sg',
+    'SKN':'kn','SLE':'sl','SLV':'sv','SMR':'sm','SOL':'sb','SOM':'so','SRB':'rs',
+    'SRI':'lk','SSD':'ss','STP':'st','SUI':'ch','SUR':'sr','SVK':'sk','SVN':'si',
+    'SWE':'se','SWZ':'sz','SYR':'sy','TAH':'pf','TAN':'tz','TCA':'tc','TGA':'to',
+    'THA':'th','TJK':'tj','TKM':'tm','TLS':'tl','TOG':'tg','TPE':'tw','TRI':'tt',
+    'TUN':'tn','TUR':'tr','UAE':'ae','UGA':'ug','UKR':'ua','URU':'uy','USA':'us',
+    'UZB':'uz','VAN':'vu','VEN':'ve','VGB':'vg','VIE':'vn','VIN':'vc','VIR':'vi',
+    'WAL':'gb-wls','YEM':'ye','ZAM':'zm','ZIM':'zw',
 }
 
-# ── Endpoints FIFA à tester ───────────────────────────────────────────────────
-FIFA_ENDPOINTS = [
-    "https://inside.fifa.com/api/client/ranking/men?locale=fr&count=211",
-    "https://inside.fifa.com/api/client/ranking/men?locale=en&count=211",
-    "https://inside.fifa.com/api/client/ranking/men?locale=fr",
-    "https://inside.fifa.com/api/client/ranking/men?locale=en",
-]
-
-HEADERS = {
+HEADERS_HTTP = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
     'Accept': 'application/json, text/plain, */*',
     'Referer': 'https://inside.fifa.com/fr/fifa-world-ranking/men',
     'Origin': 'https://inside.fifa.com',
 }
 
-# ── Repo fallback ─────────────────────────────────────────────────────────────
-FALLBACK_REPO_API = "https://api.github.com/repos/cnc8/fifa-world-ranking/contents/"
-FALLBACK_RAW_BASE = "https://raw.githubusercontent.com/cnc8/fifa-world-ranking/master/"
+FDCP_BASE = 'https://api.fifa.com/api/v3'
+INSIDE_FIFA_RANKING = 'https://inside.fifa.com/fr/fifa-world-ranking/men'
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def fetch_url(url: str, headers: dict | None = None) -> bytes:
     req = urllib.request.Request(url, headers=headers or {})
@@ -84,63 +70,97 @@ def fetch_url(url: str, headers: dict | None = None) -> bytes:
         return resp.read()
 
 
-def parse_fifa_response(data) -> list[dict] | None:
-    """Tente d'extraire la liste des équipes depuis la réponse FIFA (format variable)."""
-    items = None
-    if isinstance(data, list):
-        items = data
-    elif isinstance(data, dict):
-        for key in ('ranking', 'rankings', 'data', 'results', 'items', 'content'):
-            if key in data and isinstance(data[key], list):
-                items = data[key]
-                break
+# ── Source 1 : API FDCP FIFA ───────────────────────────────────────────────────
 
-    if not items:
+def get_latest_date_id() -> tuple[str, str] | None:
+    """Récupère l'ID de date du classement le plus récent via __NEXT_DATA__."""
+    try:
+        print("  Récupération de la date du classement depuis inside.fifa.com...")
+        raw = fetch_url(INSIDE_FIFA_RANKING, {'User-Agent': HEADERS_HTTP['User-Agent']})
+        html = raw.decode('utf-8', errors='ignore')
+        m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.DOTALL)
+        if not m:
+            print("  ⚠️  __NEXT_DATA__ introuvable")
+            return None
+        data = json.loads(m.group(1))
+        ranking = data['props']['pageProps']['pageData']['ranking']
+        date_groups = ranking.get('dates', [])
+        if not date_groups:
+            return None
+        latest_group = date_groups[0]
+        latest_date = latest_group['dates'][0]
+        date_id = latest_date['id']
+        date_str = latest_date['matchWindowEndDate']
+        print(f"  Dernière date trouvée : {date_id} ({date_str})")
+        return date_id, date_str
+    except Exception as e:
+        print(f"  ⚠️  Impossible de récupérer la date : {e}")
         return None
 
-    result = []
-    for i, item in enumerate(items):
-        try:
-            name = (
-                item.get('countryName') or item.get('name') or
-                item.get('team') or item.get('country') or ''
-            ).strip()
-            rank     = int(item.get('rank') or item.get('ranking') or (i + 1))
-            prev     = int(item.get('previousRank') or item.get('previous_rank') or rank)
-            pts      = float(item.get('totalPoints') or item.get('points') or 0)
-            conf     = str(item.get('confederation') or item.get('conf') or '')
-            if name:
-                result.append({
-                    'rank': rank,
-                    'previous_rank': prev,
-                    'change': prev - rank,
-                    'name': name,
-                    'iso2': TEAM_ISO2.get(name, ''),
-                    'confederation': conf,
-                    'points': round(pts, 2),
-                })
-        except Exception:
-            continue
 
-    return result if len(result) >= 50 else None
+def fetch_fdcp_ranking(date_id: str, date_str: str) -> tuple[list[dict], str] | None:
+    """Appelle l'API FDCP FIFA avec le dateId."""
+    url = (
+        f'{FDCP_BASE}/fifarankings/rankings/rankingsbyschedule'
+        f'?rankingScheduleId={date_id}&count=211&language=fr'
+    )
+    try:
+        print(f"  API FDCP : {url}")
+        raw = fetch_url(url, HEADERS_HTTP)
+        data = json.loads(raw)
+        results = data.get('Results', [])
+        if len(results) < 50:
+            print(f"  ⚠️  Réponse incomplète : {len(results)} équipes")
+            return None
+
+        rankings = []
+        for item in results:
+            name_list = item.get('TeamName', [])
+            name = next((n['Description'] for n in name_list if n.get('Description')), '')
+            if not name:
+                continue
+            country_code = item.get('IdCountry', '').upper()
+            iso2 = FIFA_TO_ISO2.get(country_code, country_code.lower()[:2])
+            rank = int(item.get('Rank') or 0)
+            prev_rank = int(item.get('PrevRank') or rank)
+            rankings.append({
+                'rank': rank,
+                'previous_rank': prev_rank,
+                'change': prev_rank - rank,
+                'name': name,
+                'iso2': iso2,
+                'country_code': country_code,
+                'confederation': item.get('ConfederationName', ''),
+                'points': round(float(item.get('TotalPoints', 0)), 2),
+                'rated_matches': int(item.get('RatedMatches', 0)),
+            })
+
+        rankings.sort(key=lambda x: x['rank'])
+        print(f"  ✅ API FDCP OK — {len(rankings)} équipes (date : {date_str})")
+        return rankings, date_str
+
+    except urllib.error.HTTPError as e:
+        print(f"  ⚠️  HTTP {e.code}")
+        return None
+    except Exception as e:
+        print(f"  ⚠️  Erreur : {e}")
+        return None
 
 
 def try_fifa_api() -> tuple[list[dict], str] | None:
-    for url in FIFA_ENDPOINTS:
-        try:
-            print(f"  Tentative API FIFA : {url}")
-            raw = fetch_url(url, HEADERS)
-            data = json.loads(raw)
-            rankings = parse_fifa_response(data)
-            if rankings:
-                print(f"  ✅ API FIFA OK — {len(rankings)} équipes")
-                date_str = datetime.now().strftime('%Y-%m-%d')
-                return rankings, date_str
-        except urllib.error.HTTPError as e:
-            print(f"  ⚠️  HTTP {e.code} : {url}")
-        except Exception as e:
-            print(f"  ⚠️  Erreur : {e}")
-    return None
+    """Tente de récupérer le classement via l'API officielle FIFA."""
+    date_info = get_latest_date_id()
+    if date_info is None:
+        # Fallback : utiliser le dernier ID de date connu
+        print("  Utilisation du dateId de secours (FRS_Male_Football_20260119)...")
+        date_info = ('FRS_Male_Football_20260119', '2026-04-01')
+    return fetch_fdcp_ranking(*date_info)
+
+
+# ── Source 2 : GitHub cnc8 (fallback CSV historique) ─────────────────────────
+
+FALLBACK_REPO_API = "https://api.github.com/repos/cnc8/fifa-world-ranking/contents/"
+FALLBACK_RAW_BASE = "https://raw.githubusercontent.com/cnc8/fifa-world-ranking/master/"
 
 
 def try_fallback_csv() -> tuple[list[dict], str] | None:
@@ -164,7 +184,6 @@ def try_fallback_csv() -> tuple[list[dict], str] | None:
         csv_raw = fetch_url(latest['download_url']).decode('utf-8')
         rows = list(csv.DictReader(io.StringIO(csv_raw)))
 
-        # Garder uniquement la date la plus récente du fichier
         dates = sorted(set(r.get('rank_date', '') for r in rows if r.get('rank_date')))
         max_date = dates[-1] if dates else 'inconnue'
         latest_rows = [r for r in rows if r.get('rank_date') == max_date]
@@ -177,15 +196,17 @@ def try_fallback_csv() -> tuple[list[dict], str] | None:
                 pts = round(float(r.get('total_points', 0)), 2)
             except ValueError:
                 pts = 0.0
-            prev = int(r.get('rank', 0))
+            rank = int(r.get('rank', 0))
             result.append({
-                'rank': int(r.get('rank', 0)),
-                'previous_rank': prev,
+                'rank': rank,
+                'previous_rank': rank,
                 'change': 0,
                 'name': name,
-                'iso2': TEAM_ISO2.get(name, r.get('country_abrv', '').lower()[:2]),
+                'iso2': FIFA_TO_ISO2.get(r.get('country_abrv', '').upper(), r.get('country_abrv', '').lower()[:2]),
+                'country_code': r.get('country_abrv', ''),
                 'confederation': r.get('confederation', ''),
                 'points': pts,
+                'rated_matches': 0,
             })
 
         print(f"  ✅ Fallback CSV OK — {len(result)} équipes (date classement : {max_date})")
@@ -195,7 +216,7 @@ def try_fallback_csv() -> tuple[list[dict], str] | None:
         return None
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ── Main ───────────────────────────────────────────────────────────────────────
 
 def main():
     print("=" * 55)
@@ -203,7 +224,7 @@ def main():
     print("=" * 55)
 
     result = try_fifa_api()
-    source = "FIFA API"
+    source = "FIFA API (FDCP)"
 
     if result is None:
         print("\n  API FIFA inaccessible, passage au fallback CSV...")
@@ -233,7 +254,7 @@ def main():
     print("\n  Top 10 :")
     for r in rankings[:10]:
         chg = f"(+{r['change']})" if r['change'] > 0 else (f"({r['change']})" if r['change'] < 0 else "  (=)")
-        print(f"    {r['rank']:3}. {r['name']:<30} {r['points']:8.2f} pts  {chg}")
+        print(f"    {r['rank']:3}. {r['name']:<30} {r['points']:10.2f} pts  {chg}")
 
 
 if __name__ == '__main__':
