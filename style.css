@@ -892,3 +892,27 @@ img { display: block; }
   .nav-link { padding: 5px 8px; font-size: .78rem; }
   .lang-btn { padding: 4px 9px; font-size: .7rem; min-height: 32px; min-width: 32px; }
 }
+
+/* ── Classement FIFA historique ─────────────────────────────────────── */
+.fifa-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.fifa-year-label {
+  font-size: .85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.fifa-year-select {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: .9rem;
+  cursor: pointer;
+  max-width: 280px;
+}

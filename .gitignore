@@ -30,3 +30,7 @@ AGENTS-STATUS.md
 data/matches_enriched.json
 data/stats_teams.json
 data/stats_tournaments.json
+
+# Fichiers de test BCR (générés avec --test, non destinés au repo)
+data/elo_race_test.gif
+data/fifa_race_test.gif

@@ -61,6 +61,7 @@ const I18N = {
     fifa_loading: 'Chargement classement FIFA…',
     fifa_no_data: 'Données non disponibles.<br>Lancez <code>python fetch_fifa_ranking.py</code> pour les générer.',
     th_confederation: 'Confédération',  th_fifa_pts: 'Points FIFA',
+    fifa_year_label: 'Période',  fifa_current_opt: 'Classement actuel',
     data_h1: 'Données',
     data_sub: 'Tous les fichiers sont au format ouvert (JSON / CSV) — libres de réutilisation.',
     dl_btn: 'Télécharger',
@@ -127,6 +128,7 @@ const I18N = {
     fifa_loading: 'Loading FIFA ranking…',
     fifa_no_data: 'Data unavailable.<br>Run <code>python fetch_fifa_ranking.py</code> to generate it.',
     th_confederation: 'Confederation',  th_fifa_pts: 'FIFA Points',
+    fifa_year_label: 'Period',  fifa_current_opt: 'Current ranking',
     data_h1: 'Data',
     data_sub: 'All files are in open format (JSON / CSV) — free to reuse.',
     dl_btn: 'Download',
@@ -288,7 +290,7 @@ async function init() {
       fetch('./data/groups.json').then(r => r.json()),
       fetch('./data/rankings.json').then(r => r.json()),
     ]);
-    DATA = { fixtures, teams: null, groups, rankings };
+    DATA = { fixtures, teams: null, fifaHistory: null, groups, rankings };
     initLang();
     window.addEventListener('hashchange', route);
     route();
@@ -305,6 +307,12 @@ async function ensureTeams() {
   const appEl = document.getElementById('app');
   appEl.innerHTML = `<div class="splash"><div class="spinner"></div><p>${LANG === 'fr' ? 'Chargement des équipes…' : 'Loading teams…'}</p></div>`;
   DATA.teams = await fetch('./data/teams.json').then(r => r.json());
+}
+
+// ── FIFA history lazy loader ──────────────────────────────────────────
+async function ensureFifaHistory() {
+  if (DATA.fifaHistory) return;
+  DATA.fifaHistory = await fetch('./data/fifa_ranking_history.json').then(r => r.json());
 }
 
 // ── Router ───────────────────────────────────────────────────────────
@@ -1211,52 +1219,125 @@ async function renderFifaRankings() {
     return;
   }
 
-  const rankings = data.rankings || [];
-  const maxPts   = rankings[0]?.points || 1900;
-  const dateStr  = data.ranking_date || data.updated_at?.slice(0, 10) || '—';
+  const currentRankings = data.rankings || [];
+  const currentDateStr  = data.ranking_date || data.updated_at?.slice(0, 10) || '—';
 
-  const rows = rankings.map((t, i) => {
-    const barW    = Math.round((t.points / maxPts) * 160);
-    const rankCls = i < 3 ? `rank-${i + 1}` : '';
-    const chg     = t.change;
-    const chgHtml = chg > 0
-      ? `<span class="rank-chg up">▲${chg}</span>`
-      : chg < 0
-        ? `<span class="rank-chg down">▼${Math.abs(chg)}</span>`
-        : `<span class="rank-chg eq">—</span>`;
-    const teamSlug = slugify(t.name);
-    const hasTeam  = DATA.teams && DATA.teams[teamSlug];
-    const nameHtml = hasTeam
-      ? `<a href="#/team/${encodeURIComponent(teamSlug)}">${t.name}</a>`
-      : t.name;
-
-    return `<tr class="${rankCls}">
-      <td class="rank-num" style="white-space:nowrap">${t.rank}&thinsp;${chgHtml}</td>
-      <td>${flagImg(t.iso2, t.name, 'flag-sm')}</td>
-      <td>${nameHtml}</td>
-      <td style="color:var(--muted);font-size:.8rem">${t.confederation}</td>
-      <td>
-        <div class="elo-bar-wrap">
-          <div class="elo-bar" style="width:${barW}px;max-width:160px;background:var(--blue)"></div>
-          <span class="elo-num">${t.points.toFixed(2)}</span>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+  function buildRows(rankingList, maxPts, showChange) {
+    return rankingList.map((team, i) => {
+      const barW    = Math.round((team.points / maxPts) * 160);
+      const rankCls = i < 3 ? `rank-${i + 1}` : '';
+      const chgHtml = showChange
+        ? (team.change > 0
+            ? `<span class="rank-chg up">▲${team.change}</span>`
+            : team.change < 0
+              ? `<span class="rank-chg down">▼${Math.abs(team.change)}</span>`
+              : `<span class="rank-chg eq">—</span>`)
+        : '';
+      const teamSlug    = slugify(team.name);
+      const hasTeamData = DATA.teams && DATA.teams[teamSlug];
+      const nameHtml    = hasTeamData
+        ? `<a href="#/team/${encodeURIComponent(teamSlug)}">${team.name}</a>`
+        : team.name;
+      return `<tr class="${rankCls}">
+        <td class="rank-num" style="white-space:nowrap">${team.rank}&thinsp;${chgHtml}</td>
+        <td>${flagImg(team.iso2, team.name, 'flag-sm')}</td>
+        <td>${nameHtml}</td>
+        <td style="color:var(--muted);font-size:.8rem">${team.confederation}</td>
+        <td>
+          <div class="elo-bar-wrap">
+            <div class="elo-bar" style="width:${barW}px;max-width:160px;background:var(--blue)"></div>
+            <span class="elo-num">${Number(team.points).toFixed(1)}</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
 
   app.innerHTML = `
     <div class="page-header">
       <h1>${t('fifa_h1')}</h1>
-      <p>${t('fifa_sub', rankings.length, dateStr, data.source || 'FIFA')}</p>
+      <p id="fifa-sub-label">${t('fifa_sub', currentRankings.length, currentDateStr, data.source || 'FIFA')}</p>
+      <a href="#fifa-race-video" class="race-anchor">
+        ▶ ${LANG === 'fr' ? "Voir l'évolution historique" : 'See historical evolution'}
+      </a>
+    </div>
+    <div class="fifa-controls">
+      <label class="fifa-year-label" for="fifa-year-select">${t('fifa_year_label')} :</label>
+      <select id="fifa-year-select" class="fifa-year-select">
+        <option value="current">${t('fifa_current_opt')} — ${currentDateStr}</option>
+      </select>
     </div>
     <div class="table-wrap">
       <table class="rankings-table">
         <thead><tr>
           <th>#</th><th></th><th>${t('th_team')}</th><th>${t('th_confederation')}</th><th>${t('th_fifa_pts')}</th>
         </tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody id="fifa-table-body">${buildRows(currentRankings, currentRankings[0]?.points || 1, true)}</tbody>
       </table>
+    </div>
+    <div class="race-section">
+      <h2 style="margin-bottom:8px">
+        ${LANG === 'fr' ? 'Évolution du classement FIFA (1992–2026)' : 'FIFA ranking evolution (1992–2026)'}
+      </h2>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px">
+        ${LANG === 'fr'
+          ? 'Animation Bar Chart Race — points FIFA annuels des 30 meilleures sélections.'
+          : 'Bar Chart Race animation — annual FIFA points for the top 30 national teams.'}
+      </p>
+      <div class="race-speed-btns">
+        <span style="font-size:.8rem;color:var(--muted)">${LANG === 'fr' ? 'Vitesse' : 'Speed'} :</span>
+        <button class="speed-btn active" data-rate="1">1×</button>
+        <button class="speed-btn" data-rate="1.5">1.5×</button>
+        <button class="speed-btn" data-rate="2">2×</button>
+      </div>
+      <video class="elo-race-video" id="fifa-race-video" autoplay loop muted playsinline controls
+             src="./data/fifa_race.mp4"
+             onerror="this.closest('.race-section').style.display='none'">
+      </video>
     </div>`;
+
+  const fifaVideo = app.querySelector('#fifa-race-video');
+  app.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (fifaVideo) fifaVideo.playbackRate = parseFloat(btn.dataset.rate);
+      app.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  await ensureFifaHistory();
+  if (navToken !== myToken) return;
+
+  const sel = document.getElementById('fifa-year-select');
+  if (DATA.fifaHistory?.snapshots?.length) {
+    DATA.fifaHistory.snapshots.slice().reverse().forEach(snapshot => {
+      const top1 = snapshot.rankings[0]?.name || '';
+      const opt  = document.createElement('option');
+      opt.value  = String(snapshot.year);
+      opt.textContent = `${snapshot.year}  —  #1 ${top1}`;
+      sel.appendChild(opt);
+    });
+  }
+
+  sel.addEventListener('change', () => {
+    const val   = sel.value;
+    const tbody = document.getElementById('fifa-table-body');
+    const sub   = document.getElementById('fifa-sub-label');
+    if (val === 'current') {
+      tbody.innerHTML = buildRows(currentRankings, currentRankings[0]?.points || 1, true);
+      sub.textContent = t('fifa_sub', currentRankings.length, currentDateStr, data.source || 'FIFA');
+    } else {
+      const snapshot = DATA.fifaHistory.snapshots.find(s => s.year === parseInt(val));
+      if (snapshot) {
+        const maxP = snapshot.rankings[0]?.points || 1;
+        tbody.innerHTML = buildRows(snapshot.rankings, maxP, false);
+        const topN = DATA.fifaHistory.top_n || 30;
+        sub.textContent = LANG === 'fr'
+          ? `Top ${topN} sélections · ${snapshot.date}`
+          : `Top ${topN} teams · ${snapshot.date}`;
+      }
+    }
+  });
 }
 
 // ── VIEW: Données ─────────────────────────────────────────────────────
