@@ -38,12 +38,20 @@ CONF_COLORS = {
 
 SHORT_NAMES = {
     "Bosnia and Herzegovina": "Bosnia",
+    "Serbia and Montenegro":  "Serb.&Mont.",
     "Trinidad and Tobago":    "T&T",
     "United States":          "USA",
     "Republic of Ireland":    "Ireland",
+    "Northern Ireland":       "N. Ireland",
     "Korea Republic":         "South Korea",
+    "Czech Republic":         "Czechia",
+    "Czechoslovakia":         "Czechoslovakia",   # historique, nom court suffisant
+    "Côte d'Ivoire":          "Ivory Coast",
+    "South Africa":           "S. Africa",
+    "Saudi Arabia":           "S. Arabia",
     "IR Iran":                "Iran",
     "DR Congo":               "DR Congo",
+    "Costa Rica":             "Costa Rica",       # 10 chars OK
 }
 
 
@@ -108,7 +116,7 @@ def main() -> None:
         fixed_order=False,
         fixed_max=False,
         steps_per_period=8,
-        period_length=500,
+        period_length=1000,
         interpolate_period=True,
         label_bars=True,
         bar_size=0.85,
