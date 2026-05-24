@@ -179,6 +179,7 @@ def main():
         bar_label_size=9,
         tick_label_size=10,
         bar_kwargs={"alpha": 0.88, "ec": "none"},
+        period_fmt='{x:.0f}',
         filter_column_colors=True,
     )
 
