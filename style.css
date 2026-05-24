@@ -263,6 +263,72 @@ img { display: block; }
   font-weight: 700; color: var(--accent); min-width: 20px;
 }
 
+.year-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+.year-slider-label {
+  font-size: .9rem;
+  color: var(--muted);
+  text-align: center;
+}
+.year-slider-label strong { color: var(--fg, var(--text)); }
+
+.dual-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.year-edge {
+  font-size: .75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dual-slider-track {
+  position: relative;
+  flex: 1;
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+.year-slider {
+  position: absolute;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: all;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 4px rgba(0,0,0,.4);
+}
+.year-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+}
+.year-slider::-moz-range-thumb {
+  pointer-events: all;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 4px rgba(0,0,0,.4);
+}
+.year-slider-min { z-index: 3; }
+.year-slider-max { z-index: 4; }
+
 /* ─────────────────────────────────────────────
    Stats grid
 ───────────────────────────────────────────── */

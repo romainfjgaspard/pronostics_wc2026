@@ -69,6 +69,8 @@ const I18N = {
     footer_uefa_title: 'Clubs français en Europe',
     footer_uefa_desc: 'Champions League, Europa, C4 — tous les résultats et classements UEFA des clubs français',
     footer_gh_title: 'Code source',
+    year_slider_label: (min, max, n) => `De <strong>${min}</strong> à <strong>${max}</strong> — <strong>${n}</strong> match${n > 1 ? 's' : ''}`,
+    btn_qualifs_cdm: 'Qualifs CDM 2026',
   },
   en: {
     nav_fixtures: 'Matches',       nav_teams: 'Teams',
@@ -133,6 +135,8 @@ const I18N = {
     footer_uefa_title: 'French clubs in Europe',
     footer_uefa_desc: 'Champions League, Europa, C4 — all results and UEFA standings for French clubs',
     footer_gh_title: 'Source code',
+    year_slider_label: (min, max, n) => `From <strong>${min}</strong> to <strong>${max}</strong> — <strong>${n}</strong> match${n > 1 ? 'es' : ''}`,
+    btn_qualifs_cdm: 'WC 2026 Qualifiers',
   },
 };
 
@@ -217,6 +221,9 @@ let sliderPeriod = 50;
 let teamsSort = { col: 'elo', dir: 'desc' };
 let teamsPeriod = 'all';
 let teamsSlider = null;
+let teamYearMin = 1872;
+let teamYearMax = 2026;
+let teamQualifsMode = false;
 
 // ── Init ─────────────────────────────────────────────────────────────
 async function init() {
@@ -372,6 +379,19 @@ function renderStatsGrid(s) {
     </div>`;
 }
 
+function filterMatchesByYears(matches, minYear, maxYear) {
+  return matches.filter(m => {
+    const y = parseInt(m.date.slice(0, 4), 10);
+    return y >= minYear && y <= maxYear;
+  });
+}
+
+function filterMatchesQualifs(matches) {
+  return matches.filter(m =>
+    m.tournament && m.tournament.toLowerCase().includes('qualification')
+  );
+}
+
 // ── VIEW: Fixtures ────────────────────────────────────────────────────
 function renderFixtures() {
   const app = document.getElementById('app');
@@ -445,7 +465,6 @@ function renderTeam(slug) {
   }
 
   currentSlug = slug;
-  const PERIODS = getPeriods();
 
   app.innerHTML = `
     <a href="#/" class="back-btn">${t('back_matches')}</a>
@@ -462,16 +481,23 @@ function renderTeam(slug) {
     </div>
 
     <div class="period-section">
-      <h3>${t('period_title')}</h3>
-      <div class="period-btns">
-        ${PERIODS.map(p => `
-          <button class="period-btn${p.key === 'all' ? ' active' : ''}" data-period="${p.key}">${p.label}</button>
-        `).join('')}
-      </div>
-      <div class="slider-row" id="match-slider-row">
-        <label>${t('slider_label', sliderPeriod)}</label>
-        <input type="range" id="period-slider" min="5" max="${team.matches.length || 50}"
-               value="${Math.min(sliderPeriod, team.matches.length || 50)}">
+      <div class="year-slider-wrap">
+        <div class="year-slider-label" id="year-label-team">
+          ${t('year_slider_label', teamYearMin, teamYearMax, team.matches.length)}
+        </div>
+        <div class="dual-slider-row">
+          <span class="year-edge">1872</span>
+          <div class="dual-slider-track">
+            <input type="range" class="year-slider year-slider-min" id="year-min-team"
+                   min="1872" max="2026" value="${teamYearMin}">
+            <input type="range" class="year-slider year-slider-max" id="year-max-team"
+                   min="1872" max="2026" value="${teamYearMax}">
+          </div>
+          <span class="year-edge">2026</span>
+        </div>
+        <button class="period-btn ${teamQualifsMode ? 'active' : ''}" id="btn-qualifs-team">
+          ${t('btn_qualifs_cdm')}
+        </button>
       </div>
     </div>
 
@@ -486,51 +512,60 @@ function renderTeam(slug) {
 
     <div class="matches-section">
       <h3 id="matches-title">${t('results_title')}</h3>
-      <div class="table-wrap" id="matches-table-wrap">
-        ${buildMatchesTable((team.matches || []).slice(0, sliderPeriod))}
-      </div>
+      <div class="table-wrap" id="matches-table-wrap"></div>
     </div>`;
 
-  updateStats(team, 'all');
+  function applyTeamFilters() {
+    const matches = teamQualifsMode
+      ? filterMatchesQualifs(team.matches || [])
+      : filterMatchesByYears(team.matches || [], teamYearMin, teamYearMax);
 
-  function updateMatchList(period) {
-    const wrap  = document.getElementById('matches-table-wrap');
-    const title = document.getElementById('matches-title');
-    const sliderRow = document.getElementById('match-slider-row');
-    if (!wrap) return;
-    if (period === 'all_time') {
-      wrap.innerHTML  = buildMatchesTable(team.matches || []);
-      if (title) title.textContent = `${t('period_all_time')} (${(team.matches || []).length})`;
-      if (sliderRow) sliderRow.style.display = 'none';
-    } else {
-      const n = Math.min(sliderPeriod, (team.matches || []).length);
-      wrap.innerHTML  = buildMatchesTable((team.matches || []).slice(0, n));
-      if (title) title.textContent = t('results_title');
-      if (sliderRow) sliderRow.style.display = '';
+    const label = document.getElementById('year-label-team');
+    if (label) {
+      if (teamQualifsMode) {
+        label.innerHTML = `${t('btn_qualifs_cdm')} — <strong>${matches.length}</strong> match${matches.length > 1 ? 's' : ''}`;
+      } else {
+        label.innerHTML = t('year_slider_label', teamYearMin, teamYearMax, matches.length);
+      }
     }
+
+    const stats = computeStatsFrom(matches);
+    document.getElementById('stats-display').innerHTML = renderStatsGrid(stats);
+    const wrap = document.getElementById('matches-table-wrap');
+    if (wrap) wrap.innerHTML = buildMatchesTable(matches);
+    const title = document.getElementById('matches-title');
+    if (title) title.textContent = `${t('results_title')} (${matches.length})`;
   }
 
-  app.querySelectorAll('.period-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      updateStats(team, btn.dataset.period);
-      updateMatchList(btn.dataset.period);
-    });
-  });
+  applyTeamFilters();
 
-  const slider = app.querySelector('#period-slider');
-  if (slider) {
-    slider.addEventListener('input', () => {
-      sliderPeriod = parseInt(slider.value);
-      const lbl = app.querySelector('.slider-row label');
-      if (lbl) lbl.innerHTML = t('slider_label', sliderPeriod);
-      app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-      const n = Math.min(sliderPeriod, (team.matches || []).length);
-      const stats = computeStatsFrom((team.matches || []).slice(0, n));
-      document.getElementById('stats-display').innerHTML = renderStatsGrid(stats);
-      const wrap = document.getElementById('matches-table-wrap');
-      if (wrap) wrap.innerHTML = buildMatchesTable((team.matches || []).slice(0, n));
+  const minSlider = app.querySelector('#year-min-team');
+  const maxSlider = app.querySelector('#year-max-team');
+  const qualifBtn = app.querySelector('#btn-qualifs-team');
+
+  if (minSlider) {
+    minSlider.addEventListener('input', () => {
+      teamYearMin = parseInt(minSlider.value, 10);
+      if (teamYearMin > teamYearMax) { teamYearMax = teamYearMin; maxSlider.value = teamYearMax; }
+      teamQualifsMode = false;
+      qualifBtn?.classList.remove('active');
+      applyTeamFilters();
+    });
+  }
+  if (maxSlider) {
+    maxSlider.addEventListener('input', () => {
+      teamYearMax = parseInt(maxSlider.value, 10);
+      if (teamYearMax < teamYearMin) { teamYearMin = teamYearMax; minSlider.value = teamYearMin; }
+      teamQualifsMode = false;
+      qualifBtn?.classList.remove('active');
+      applyTeamFilters();
+    });
+  }
+  if (qualifBtn) {
+    qualifBtn.addEventListener('click', () => {
+      teamQualifsMode = !teamQualifsMode;
+      qualifBtn.classList.toggle('active', teamQualifsMode);
+      applyTeamFilters();
     });
   }
 }
