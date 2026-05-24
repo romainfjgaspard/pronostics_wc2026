@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 7 page Données)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8–P10 à faire (PLAN_CORRECTIONS.md)
+**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 8 : Équipe + Confrontation)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9–P10 à faire (PLAN_CORRECTIONS.md)
 
 ---
 
@@ -569,7 +569,33 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 **7.3 — Section méthodologie Elo :**
 - 4e `<li>` ajouté dans `sourcesHtml` FR et EN : "Score Elo — méthodologie détaillée" avec K-facteurs détaillés (Euro/Copa/CAN/Asie ×50), avantage domicile, score initial
 
-**Prochaines étapes :** P8 (drapeaux w320, badge FIFA, forme droite), P9 (README), P10 (Quiz)
+**Prochaines étapes :** P9 (README), P10 (Quiz)
+
+---
+
+### Session 2026-05-25 — Phase 8 : Équipe + Confrontation — drapeaux HD + layout + FIFA rank + forme droite
+
+**Fichiers modifiés :** `fetch_flags.py`, `app.js`, `style.css`
+**Fichiers régénérés :** `data/flags/*.png` (138 fichiers, 320×213 px)
+
+**8.1 — Drapeaux w320 :**
+- `fetch_flags.py` : `BASE_URL` `w160` → `w320`, message mis à jour
+- `data/flags/*.png` : 138 drapeaux supprimés et re-téléchargés (320px, 0 erreur, 175 KB total)
+- France 320×213 px, Allemagne 320×192 px — nets sur écrans HiDPI/Retina
+
+**8.2 — Slider + bouton Qualifs sur une ligne :**
+- `renderTeam()` : `<div class="dual-slider-row">` + `<button>` encapsulés dans `<div class="controls-inline-row"><div class="dual-slider-row" style="flex:1">...</div><button></div>`
+- `renderCompare()` : même transformation appliquée
+- `style.css` : `.controls-inline-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap }` + `.controls-inline-row .dual-slider-row { flex:1; min-width:160px }`
+
+**8.3 — Badge FIFA rank :**
+- `renderTeam()` : `${DATA.fifaRankMap?.has(team.iso2) ? \`<span class="badge badge-fifa">FIFA #...</span>\` : ''}` ajouté après `badge-elo`
+- `renderCompare()` : rang FIFA injecté dans `.compare-team-meta` pour t1 et t2 (keyed par iso2)
+- `style.css` : `.badge-fifa { background: rgba(251,191,36,.15); color: #fbbf24; }` ajouté
+
+**8.4 — Forme droite alignée à droite :**
+- `renderCompare()` : 2e `.compare-form-col` → `.compare-form-col compare-form-col--right`
+- `style.css` : `.compare-form-col--right { text-align:right }` + `.compare-form-col--right .form-badges { justify-content:flex-end }`
 
 ---
 
@@ -595,4 +621,5 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 | **P5** | FIFA ranking : noms FR (`dn()`), select → slider (1992–2026), BCR vidéo déplacée en haut | ✅ Fait (2026-05-25) |
 | **P6** | Elo ranking : `elo_sub` raccourci, explainer → lien Données, BCR en haut, slider 1872–2025, `elo_ranking_history.json` (155 snapshots) | ✅ Fait (2026-05-25) |
 | **P7** | Données : suppression infoBanner, descriptions "depuis 1872", section méthodologie Elo détaillée | ✅ Fait (2026-05-25) |
-| **P8–P10** | Équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
+| **P8** | Drapeaux w320, slider+bouton en ligne, badge FIFA rank, forme droite alignée | ✅ Fait (2026-05-25) |
+| **P9–P10** | README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |

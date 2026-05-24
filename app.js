@@ -598,6 +598,9 @@ async function renderTeam(slug) {
         <div class="team-meta">
           <span class="badge badge-group">${t('group')} ${team.group}</span>
           <span class="badge badge-elo">Elo ${team.elo}</span>
+          ${DATA.fifaRankMap?.has(team.iso2)
+            ? `<span class="badge badge-fifa">FIFA #${DATA.fifaRankMap.get(team.iso2)}</span>`
+            : ''}
         </div>
       </div>
     </div>
@@ -607,19 +610,21 @@ async function renderTeam(slug) {
         <div class="year-slider-label" id="year-label-team">
           ${t('year_slider_label', teamYearMin, teamYearMax, team.matches.length)}
         </div>
-        <div class="dual-slider-row">
-          <span class="year-edge">1872</span>
-          <div class="dual-slider-track">
-            <input type="range" class="year-slider year-slider-min" id="year-min-team"
-                   min="1872" max="2026" value="${teamYearMin}">
-            <input type="range" class="year-slider year-slider-max" id="year-max-team"
-                   min="1872" max="2026" value="${teamYearMax}">
+        <div class="controls-inline-row">
+          <div class="dual-slider-row" style="flex:1">
+            <span class="year-edge">1872</span>
+            <div class="dual-slider-track">
+              <input type="range" class="year-slider year-slider-min" id="year-min-team"
+                     min="1872" max="2026" value="${teamYearMin}">
+              <input type="range" class="year-slider year-slider-max" id="year-max-team"
+                     min="1872" max="2026" value="${teamYearMax}">
+            </div>
+            <span class="year-edge">2026</span>
           </div>
-          <span class="year-edge">2026</span>
+          <button class="period-btn ${teamQualifsMode ? 'active' : ''}" id="btn-qualifs-team">
+            ${t('btn_qualifs_cdm')}
+          </button>
         </div>
-        <button class="period-btn ${teamQualifsMode ? 'active' : ''}" id="btn-qualifs-team">
-          ${t('btn_qualifs_cdm')}
-        </button>
       </div>
     </div>
 
@@ -1003,7 +1008,7 @@ async function renderCompare(slug1, slug2) {
           <h3>${t('form_of', dn(t1.name))}</h3>
           <div class="form-badges">${form1 || '<span style="color:var(--muted)">—</span>'}</div>
         </div>
-        <div class="compare-form-col">
+        <div class="compare-form-col compare-form-col--right">
           <h3>${t('form_of', dn(t2.name))}</h3>
           <div class="form-badges">${form2 || '<span style="color:var(--muted)">—</span>'}</div>
         </div>
@@ -1018,14 +1023,14 @@ async function renderCompare(slug1, slug2) {
         ${flagImg(t1.iso2, t1.name, 'team-flag-lg')}
         <div>
           <div class="compare-team-name"><a href="#/team/${encodeURIComponent(slug1)}">${dn(t1.name)}</a></div>
-          <div class="compare-team-meta">${t('group')} ${t1.group} · Elo ${t1.elo}</div>
+          <div class="compare-team-meta">${t('group')} ${t1.group}${DATA.fifaRankMap?.has(t1.iso2) ? ` · FIFA #${DATA.fifaRankMap.get(t1.iso2)}` : ''} · Elo ${t1.elo}</div>
         </div>
       </div>
       <div class="compare-vs">VS</div>
       <div class="compare-team-hdr compare-team-hdr-right">
         <div style="text-align:right">
           <div class="compare-team-name"><a href="#/team/${encodeURIComponent(slug2)}">${dn(t2.name)}</a></div>
-          <div class="compare-team-meta">${t('group')} ${t2.group} · Elo ${t2.elo}</div>
+          <div class="compare-team-meta">${t('group')} ${t2.group}${DATA.fifaRankMap?.has(t2.iso2) ? ` · FIFA #${DATA.fifaRankMap.get(t2.iso2)}` : ''} · Elo ${t2.elo}</div>
         </div>
         ${flagImg(t2.iso2, t2.name, 'team-flag-lg')}
       </div>
@@ -1036,19 +1041,21 @@ async function renderCompare(slug1, slug2) {
         <div class="year-slider-label" id="year-label-cmp">
           ${t('year_slider_label', cmpYearMin, cmpYearMax, 0)}
         </div>
-        <div class="dual-slider-row">
-          <span class="year-edge">1872</span>
-          <div class="dual-slider-track">
-            <input type="range" class="year-slider year-slider-min" id="year-min-cmp"
-                   min="1872" max="2026" value="${cmpYearMin}">
-            <input type="range" class="year-slider year-slider-max" id="year-max-cmp"
-                   min="1872" max="2026" value="${cmpYearMax}">
+        <div class="controls-inline-row">
+          <div class="dual-slider-row" style="flex:1">
+            <span class="year-edge">1872</span>
+            <div class="dual-slider-track">
+              <input type="range" class="year-slider year-slider-min" id="year-min-cmp"
+                     min="1872" max="2026" value="${cmpYearMin}">
+              <input type="range" class="year-slider year-slider-max" id="year-max-cmp"
+                     min="1872" max="2026" value="${cmpYearMax}">
+            </div>
+            <span class="year-edge">2026</span>
           </div>
-          <span class="year-edge">2026</span>
+          <button class="period-btn ${cmpQualifsMode ? 'active' : ''}" id="btn-qualifs-cmp">
+            ${t('btn_qualifs_cdm')}
+          </button>
         </div>
-        <button class="period-btn ${cmpQualifsMode ? 'active' : ''}" id="btn-qualifs-cmp">
-          ${t('btn_qualifs_cdm')}
-        </button>
       </div>
     </div>
 

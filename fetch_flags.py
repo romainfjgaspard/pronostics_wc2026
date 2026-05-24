@@ -16,13 +16,13 @@ ROOT = Path(__file__).parent
 FLAGS_DIR = ROOT / "data" / "flags"
 FLAGS_DIR.mkdir(exist_ok=True)
 
-BASE_URL = "https://flagcdn.com/w160/{}.png"
+BASE_URL = "https://flagcdn.com/w320/{}.png"
 
 
 def download_flags() -> None:
     iso_codes = sorted(set(TEAM_ISO2.values()))
     total = len(iso_codes)
-    print(f"Téléchargement de {total} drapeaux (w160) → data/flags/\n")
+    print(f"Téléchargement de {total} drapeaux (w320) → data/flags/\n")
 
     ok, skip, fail = 0, 0, 0
     for i, iso in enumerate(iso_codes, 1):

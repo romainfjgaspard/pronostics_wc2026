@@ -233,6 +233,7 @@ img { display: block; }
 }
 .badge-group { background: rgba(34,197,94,.15); color: var(--win); }
 .badge-elo   { background: rgba(56,189,248,.15); color: var(--blue); }
+.badge-fifa  { background: rgba(251,191,36,.15); color: #fbbf24; }
 
 /* ─────────────────────────────────────────────
    Period selector
@@ -704,6 +705,10 @@ img { display: block; }
 }
 .teams-controls .year-slider-wrap { flex: 1; min-width: 220px; }
 .teams-controls .teams-search { align-self: flex-end; max-width: 220px; margin-bottom: 4px; }
+.controls-inline-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.controls-inline-row .dual-slider-row { flex: 1; min-width: 160px; }
 .teams-search {
   flex: 1; min-width: 160px; max-width: 260px;
   padding: 6px 12px; border-radius: 6px;
@@ -784,6 +789,8 @@ img { display: block; }
   text-transform: uppercase; letter-spacing: .8px;
   margin-bottom: 8px;
 }
+.compare-form-col--right { text-align: right; }
+.compare-form-col--right .form-badges { justify-content: flex-end; }
 
 @media (max-width: 600px) {
   .compare-header { grid-template-columns: 1fr; gap: 8px; }
