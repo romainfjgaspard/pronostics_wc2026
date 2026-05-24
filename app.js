@@ -288,12 +288,19 @@ let navToken = 0;
 // ── Init ─────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const [fixtures, groups, rankings] = await Promise.all([
+    const [fixtures, groups, rankings, fifaRanking] = await Promise.all([
       fetch('./data/fixtures.json').then(r => r.json()),
       fetch('./data/groups.json').then(r => r.json()),
       fetch('./data/rankings.json').then(r => r.json()),
+      fetch('./data/fifa_ranking.json').then(r => r.json()).catch(() => null),
     ]);
     DATA = { fixtures, teams: null, fifaHistory: null, groups, rankings };
+    DATA.fifaRankMap = new Map();
+    if (fifaRanking?.rankings) {
+      for (const entry of fifaRanking.rankings) {
+        if (entry.iso2) DATA.fifaRankMap.set(entry.iso2, entry.rank);
+      }
+    }
     initLang();
     window.addEventListener('hashchange', route);
     route();
@@ -720,6 +727,7 @@ async function renderTeams() {
     { col: 'gf',    label: t('col_gf'),   align: 'center' },
     { col: 'ga',    label: t('col_ga'),   align: 'center' },
     { col: 'gd',    label: t('col_gd'),   align: 'center' },
+    { col: 'fifa',  label: 'FIFA',         align: 'right'  },
     { col: 'elo',   label: t('col_elo'),  align: 'right'  },
   ];
 
@@ -730,7 +738,7 @@ async function renderTeams() {
     </div>
 
     <div class="teams-controls">
-      <div class="year-slider-wrap">
+      <div class="year-slider-wrap" style="flex:1;min-width:220px">
         <div class="year-slider-label" id="year-label-teams">
           ${t('year_slider_label', teamsYearMin, teamsYearMax, 0)}
         </div>
@@ -744,12 +752,14 @@ async function renderTeams() {
           </div>
           <span class="year-edge">2026</span>
         </div>
-        <button class="period-btn ${teamsQualifsMode ? 'active' : ''}" id="btn-qualifs-teams">
-          ${t('btn_qualifs_cdm')}
-        </button>
       </div>
+      <button class="period-btn ${teamsQualifsMode ? 'active' : ''}" id="btn-qualifs-teams"
+              style="flex-shrink:0;align-self:flex-end;margin-bottom:4px">
+        ${t('btn_qualifs_cdm')}
+      </button>
       <input type="search" id="teams-search" class="teams-search"
-             placeholder="${t('search_placeholder')}" value="">
+             placeholder="${t('search_placeholder')}" value=""
+             style="align-self:flex-end;margin-bottom:4px">
     </div>
 
     <div class="table-wrap">
@@ -812,7 +822,7 @@ async function renderTeams() {
         col,
         dir: teamsSort.col === col
           ? (teamsSort.dir === 'asc' ? 'desc' : 'asc')
-          : (col === 'name' || col === 'group' ? 'asc' : 'desc'),
+          : (col === 'name' || col === 'group' || col === 'fifa' ? 'asc' : 'desc'),
       };
       updateTeamsSortHeaders();
       renderTeamsBody(searchInput?.value || '');
@@ -851,6 +861,11 @@ function renderTeamsBody(search = '') {
     if (col === 'name')  return mult * a.name.localeCompare(b.name);
     if (col === 'group') return mult * a.group.localeCompare(b.group);
     if (col === 'elo')   return mult * (a.elo - b.elo);
+    if (col === 'fifa') {
+      const fa = DATA.fifaRankMap?.get(a.iso2) || 9999;
+      const fb = DATA.fifaRankMap?.get(b.iso2) || 9999;
+      return mult * (fa - fb);
+    }
     const k = statKey[col];
     return k ? mult * ((a.s[k] ?? 0) - (b.s[k] ?? 0)) : 0;
   });
@@ -870,6 +885,7 @@ function renderTeamsBody(search = '') {
       <td style="text-align:center">${t.s.GF}</td>
       <td style="text-align:center">${t.s.GA}</td>
       <td style="text-align:center;${gdColor}">${gdStr}</td>
+      <td style="text-align:right;color:var(--muted)">${DATA.fifaRankMap?.get(t.iso2) || '—'}</td>
       <td style="text-align:right;color:var(--blue);font-weight:700">${t.elo}</td>
     </tr>`;
   }).join('');

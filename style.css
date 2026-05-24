@@ -696,13 +696,14 @@ img { display: block; }
 ───────────────────────────────────────────── */
 .teams-controls {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
-.teams-controls .year-slider-wrap { width: 100%; }
-.teams-controls .teams-search { align-self: flex-start; max-width: 280px; }
+.teams-controls .year-slider-wrap { flex: 1; min-width: 220px; }
+.teams-controls .teams-search { align-self: flex-end; max-width: 220px; margin-bottom: 4px; }
 .teams-search {
   flex: 1; min-width: 160px; max-width: 260px;
   padding: 6px 12px; border-radius: 6px;
