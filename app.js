@@ -793,14 +793,15 @@ function renderData() {
     </div>
 
     <div class="info-banner">
-      <strong>Résultats historiques</strong> —
+      <strong>Résultats</strong> —
       <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
-      (CC0, mis à jour en continu) · 3 970 matchs depuis janvier 2022.
+      (CC0, actif — dernier commit mai 2026) · 3 970 matchs depuis jan 2022,
+      dont 108 résultats 2026 + 72 fixtures WC 2026.
       &nbsp;&nbsp;<strong>Classement FIFA</strong> — API officielle
       <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
-      · 211 sélections · avril 2026 · France #1.
-      &nbsp;&nbsp;<strong>Score Elo</strong> — calcul maison sur K-facteurs
-      WC×60 · tournois×50 · qualifs×35 · amicaux×20.
+      · 211 sélections · avril 2026 · France #1
+      (vs repo cnc8 : abandonné depuis 2021, données de 2020, Belgique #1).
+      &nbsp;&nbsp;<strong>Score Elo</strong> — calcul maison, K-facteurs WC×60 · tournois×50 · qualifs×35 · amicaux×20.
     </div>
 
     <div class="data-grid">${cards}</div>
@@ -810,20 +811,24 @@ function renderData() {
       <ul>
         <li>
           <strong>Résultats historiques</strong> :
-          <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a> (CC0) —
-          3 970 matchs depuis jan 2022 · WC 2022, Euro 2024, Copa América 2024, CAN, Nations League, qualifications, amicaux.
+          <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
+          (CC0) — repo <strong>actif</strong>, dernier commit 12 mai 2026.
+          3 970 matchs depuis jan 2022 · 108 résultats 2026 avec scores réels ·
+          72 fixtures WC 2026 (scores <code>NA</code> = matchs à venir) ·
+          WC 2022, Euro 2024, Copa América 2024, CAN, Nations League, qualifications WC 2026, amicaux.
         </li>
         <li>
           <strong>Classement FIFA</strong> :
-          <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
-          via API officielle FDCP — 211 sélections, avril 2026 (France #1, 1 877 pts).
+          API officielle <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
+          (endpoint FDCP, dateId dynamique) — 211 sélections, avril 2026, France #1 (1 877 pts).
           Le repo <a href="https://github.com/cnc8/fifa-world-ranking" target="_blank" class="ext-link">cnc8/fifa-world-ranking</a>
-          est conservé en fallback uniquement (abandonné depuis jan 2021, données de déc. 2020).
+          est conservé en fallback uniquement : <strong>abandonné depuis janvier 2021</strong>,
+          données de décembre 2020 (Belgique #1, 1 780 pts).
         </li>
         <li>
-          <strong>Score Elo</strong> : calcul maison —
+          <strong>Score Elo</strong> : calcul maison — absent des sources publiques.
           K-facteurs WC×60 · tournois×50 · qualifs×35 · amicaux×20 ·
-          avantage terrain +75 (neutralisé sur terrain neutre).
+          avantage terrain +75 (neutralisé sur terrain neutre) · score initial 1 500.
         </li>
       </ul>
     </div>`;

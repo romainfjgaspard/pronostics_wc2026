@@ -74,9 +74,11 @@ python3 generate_web_data.py
 
 ### Résultats historiques (`results.csv`)
 
-Source : [martj42/international_results](https://github.com/martj42/international_results) (CC0, mis à jour en continu)
+Source : [martj42/international_results](https://github.com/martj42/international_results) (CC0) — **repo actif**, dernier commit le 12 mai 2026.
 
 - **3 970 matchs** depuis le 1er janvier 2022
+- **108 matchs 2026** avec scores réels (qualifications, amicaux jusqu'en mars 2026)
+- **72 fixtures WC 2026** incluses (score `NA` = matchs pas encore joués au moment du fetch)
 - Couvre : WC 2022, Euro 2024, Copa América 2024, CAN 2023/2024, Nations League, qualifications WC 2026, matchs amicaux
 - Champs : date, domicile, extérieur, score, compétition, ville, terrain neutre
 
@@ -84,15 +86,16 @@ Source : [martj42/international_results](https://github.com/martj42/internationa
 
 Source : **API officielle FIFA** — endpoint `api.fifa.com/api/v3/fifarankings/rankings/rankingsbyschedule`
 
-> Le script récupère dynamiquement l'identifiant de la dernière date publiée via `__NEXT_DATA__` de `inside.fifa.com`, puis interroge l'API FDCP directement. Le repo GitHub [cnc8/fifa-world-ranking](https://github.com/cnc8/fifa-world-ranking) est conservé comme **filet de secours** uniquement — il n'est plus maintenu depuis janvier 2021 et ne contient que des données de décembre 2020 (Belgique #1).
+> Le script récupère dynamiquement l'identifiant de la dernière date publiée via `__NEXT_DATA__` de `inside.fifa.com`, puis interroge l'API FDCP directement.
+> Le repo GitHub [cnc8/fifa-world-ranking](https://github.com/cnc8/fifa-world-ranking) est conservé comme **filet de secours** uniquement — abandonné depuis janvier 2021, données de décembre 2020 (Belgique #1). C'est la **principale différence** par rapport aux datasets publics existants.
 
-| | cnc8 (fallback) | Notre fetch |
+| | cnc8 (fallback, abandonné) | Notre fetch (API FDCP) |
 |---|---|---|
 | Date des données | 2020-12-10 | **2026-04-01** |
 | #1 mondial | Belgique (1 780 pts) | **France (1 877 pts)** |
 | Équipes | 210 | **211** |
 | Champs | rank, name, conf, points | + `previous_rank`, `change`, `rated_matches`, `iso2`, `country_code` |
-| Maintenance | Abandonné jan 2021 | **API officielle FIFA, toujours à jour** |
+| Maintenance | Mort depuis jan 2021 | **API officielle FIFA, dynamique** |
 
 ### Score Elo (`rankings.json`, `teams.json`)
 
