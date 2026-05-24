@@ -467,10 +467,10 @@ function renderTeam(slug) {
           <button class="period-btn${p.key === 'all' ? ' active' : ''}" data-period="${p.key}">${p.label}</button>
         `).join('')}
       </div>
-      <div class="slider-row">
+      <div class="slider-row" id="match-slider-row">
         <label>${t('slider_label', sliderPeriod)}</label>
-        <input type="range" id="period-slider" min="5" max="${Math.min(50, team.matches.length || 50)}"
-               value="${sliderPeriod}">
+        <input type="range" id="period-slider" min="5" max="${team.matches.length || 50}"
+               value="${Math.min(sliderPeriod, team.matches.length || 50)}">
       </div>
     </div>
 
@@ -484,19 +484,37 @@ function renderTeam(slug) {
     </div>
 
     <div class="matches-section">
-      <h3>${t('results_title')}</h3>
-      <div class="table-wrap">
-        ${buildMatchesTable(team.matches || [])}
+      <h3 id="matches-title">${t('results_title')}</h3>
+      <div class="table-wrap" id="matches-table-wrap">
+        ${buildMatchesTable((team.matches || []).slice(0, sliderPeriod))}
       </div>
     </div>`;
 
   updateStats(team, 'all');
+
+  function updateMatchList(period) {
+    const wrap  = document.getElementById('matches-table-wrap');
+    const title = document.getElementById('matches-title');
+    const sliderRow = document.getElementById('match-slider-row');
+    if (!wrap) return;
+    if (period === 'all_time') {
+      wrap.innerHTML  = buildMatchesTable(team.matches || []);
+      if (title) title.textContent = `${t('results_title')} (${(team.matches || []).length})`;
+      if (sliderRow) sliderRow.style.display = 'none';
+    } else {
+      const n = Math.min(sliderPeriod, (team.matches || []).length);
+      wrap.innerHTML  = buildMatchesTable((team.matches || []).slice(0, n));
+      if (title) title.textContent = t('results_title');
+      if (sliderRow) sliderRow.style.display = '';
+    }
+  }
 
   app.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       updateStats(team, btn.dataset.period);
+      updateMatchList(btn.dataset.period);
     });
   });
 
@@ -507,8 +525,11 @@ function renderTeam(slug) {
       const lbl = app.querySelector('.slider-row label');
       if (lbl) lbl.innerHTML = t('slider_label', sliderPeriod);
       app.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-      const stats = computeStatsFrom((team.matches || []).slice(0, sliderPeriod));
+      const n = Math.min(sliderPeriod, (team.matches || []).length);
+      const stats = computeStatsFrom((team.matches || []).slice(0, n));
       document.getElementById('stats-display').innerHTML = renderStatsGrid(stats);
+      const wrap = document.getElementById('matches-table-wrap');
+      if (wrap) wrap.innerHTML = buildMatchesTable((team.matches || []).slice(0, n));
     });
   }
 }

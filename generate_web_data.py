@@ -164,7 +164,7 @@ def team_stats(matches, team, since=None, until=None, tourney=None):
             'avg_gf':round(gf/gp,2),'avg_ga':round(ga/gp,2),
             'win_pct':round(w/gp*100,1)}
 
-def team_recent(matches, team, limit=25):
+def team_recent(matches, team):
     out = []
     for m in sorted(matches, key=lambda x: x['date'], reverse=True):
         if m['home_team'] != team and m['away_team'] != team: continue
@@ -180,7 +180,6 @@ def team_recent(matches, team, limit=25):
         out.append({'date':m['date'],'tournament':m.get('tournament',''),
                     'opponent':opp,'opp_iso2':TEAM_ISO2.get(opp,''),
                     'home':ih,'scored':s,'conceded':c,'result':r})
-        if len(out) >= limit: break
     return out
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -242,7 +241,7 @@ def main():
     teams_out = {}
     for team in sorted(wc_teams):
         slug = slugify(team)
-        recent = team_recent(history, team, limit=50)
+        recent = team_recent(history, team)
 
         s_l10 = None
         if recent:
