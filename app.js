@@ -178,16 +178,21 @@ const TEAM_FR_NAMES = {
   'Belgium':                'Belgique',
   'Bosnia and Herzegovina': 'Bosnie-Herzégovine',
   'Brazil':                 'Brésil',
+  'Canada':                 'Canada',
   'Cape Verde':             'Cap-Vert',
   'Colombia':               'Colombie',
   'Croatia':                'Croatie',
+  'Curaçao':                'Curaçao',
   'Czech Republic':         'République tchèque',
   'DR Congo':               'RD Congo',
   'Ecuador':                'Équateur',
   'Egypt':                  'Égypte',
   'England':                'Angleterre',
+  'France':                 'France',
   'Germany':                'Allemagne',
+  'Ghana':                  'Ghana',
   'Haiti':                  'Haïti',
+  'Iran':                   'Iran',
   'Iraq':                   'Irak',
   'Ivory Coast':            "Côte d'Ivoire",
   'Japan':                  'Japon',
@@ -196,7 +201,13 @@ const TEAM_FR_NAMES = {
   'Morocco':                'Maroc',
   'Netherlands':            'Pays-Bas',
   'New Zealand':            'Nouvelle-Zélande',
+  'Nigeria':                'Nigéria',
   'Norway':                 'Norvège',
+  'Panama':                 'Panama',
+  'Paraguay':               'Paraguay',
+  'Portugal':               'Portugal',
+  'Qatar':                  'Qatar',
+  'Republic of Ireland':    'Irlande',
   'Saudi Arabia':           'Arabie saoudite',
   'Scotland':               'Écosse',
   'Senegal':                'Sénégal',
@@ -205,13 +216,51 @@ const TEAM_FR_NAMES = {
   'Spain':                  'Espagne',
   'Sweden':                 'Suède',
   'Switzerland':            'Suisse',
+  'Trinidad and Tobago':    'Trinité-et-Tobago',
   'Tunisia':                'Tunisie',
+  'Turkey':                 'Turquie',
   'United States':          'États-Unis',
+  'Uruguay':                'Uruguay',
   'Uzbekistan':             'Ouzbékistan',
 };
 
 function dn(name) {
   return LANG === 'fr' ? (TEAM_FR_NAMES[name] || name) : name;
+}
+
+// ── Tournament name translations (EN → FR) ────────────────────────────
+const TOURNAMENT_FR_NAMES = {
+  'Friendly':                              'Amical',
+  'FIFA World Cup':                        'Coupe du Monde FIFA',
+  'FIFA World Cup qualification':          'Qualification CDM',
+  'UEFA Euro':                             'UEFA Euro',
+  'UEFA Euro qualification':              'Qualification UEFA Euro',
+  'African Cup of Nations':               "Coupe d'Afrique des Nations",
+  'African Cup of Nations qualification': 'Qualification CAN',
+  'AFC Asian Cup':                         'Coupe d\'Asie AFC',
+  'AFC Asian Cup qualification':           'Qualification Coupe d\'Asie AFC',
+  'UEFA Nations League':                   'Ligue des Nations UEFA',
+  'UEFA Nations League qualification':     'Qualification LN UEFA',
+  'CONCACAF Nations League':              'Ligue des Nations CONCACAF',
+  'CONCACAF Nations League qualification':'Qualification LN CONCACAF',
+  'CONCACAF Championship':                'Championnat CONCACAF',
+  'CONCACAF Championship qualification':  'Qualification CONCACAF',
+  'Confederations Cup':                    'Coupe des Confédérations',
+  'Olympic Games':                         'Jeux Olympiques',
+  'Gold Cup':                              'Gold Cup',
+  'Gold Cup qualification':               'Qualification Gold Cup',
+  'Gulf Cup':                              'Coupe du Golfe',
+  'Arab Cup':                              'Coupe Arabe',
+  'Arab Cup qualification':               'Qualification Coupe Arabe',
+  'Asian Games':                           'Jeux Asiatiques',
+  'Nordic Championship':                   'Championnat Nordique',
+  'EAFF Championship':                     'Championnat EAFF',
+  'Copa América':                          'Copa América',
+  'Copa América qualification':           'Qualification Copa América',
+};
+
+function dt(tournament) {
+  return LANG === 'fr' ? (TOURNAMENT_FR_NAMES[tournament] || tournament) : tournament;
 }
 
 // ── State ────────────────────────────────────────────────────────────
@@ -569,7 +618,7 @@ function buildMatchesTable(matches) {
         ${loc}
       </div></td>
       <td class="score-cell ${m.result}">${score}</td>
-      <td><span class="competition-tag" title="${m.tournament}">${m.tournament}</span></td>
+      <td><span class="competition-tag" title="${m.tournament}">${dt(m.tournament)}</span></td>
     </tr>`;
   }).join('');
 
@@ -803,9 +852,24 @@ function renderCompare(slug1, slug2) {
       </tr>`;
     }).join('');
 
-    const h2hHtml = h2h.length === 0
-      ? `<div class="no-data">${t('no_h2h')}</div>`
-      : `<div class="table-wrap">${buildMatchesTable(h2h)}</div>`;
+    let h2hHtml;
+    if (h2h.length === 0) {
+      h2hHtml = `<div class="no-data">${t('no_h2h')}</div>`;
+    } else {
+      const h2hW = h2h.filter(m => m.result === 'W').length;
+      const h2hD = h2h.filter(m => m.result === 'D').length;
+      const h2hL = h2h.filter(m => m.result === 'L').length;
+      h2hHtml = `
+        <div class="h2h-summary">
+          <span class="h2h-score win">${h2hW}</span>
+          <span class="h2h-sep">${dn(t1.name)}</span>
+          <span class="h2h-score draw">${h2hD}</span>
+          <span class="h2h-sep">${t('stat_d')}</span>
+          <span class="h2h-score loss">${h2hL}</span>
+          <span class="h2h-sep">${dn(t2.name)}</span>
+        </div>
+        <div class="table-wrap">${buildMatchesTable(h2h)}</div>`;
+    }
 
     const form1 = (t1.matches || []).slice(0, 10).map(m => resultBadge(m.result)).join('');
     const form2 = (t2.matches || []).slice(0, 10).map(m => resultBadge(m.result)).join('');
