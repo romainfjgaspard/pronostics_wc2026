@@ -65,6 +65,9 @@ const I18N = {
     dl_btn: 'Télécharger',
     sources_h3: 'Sources détaillées',
     load_error: '⚠️ Impossible de charger les données.<br>Vérifiez que le serveur local tourne et que les JSON sont présents.',
+    footer_uefa_title: 'Clubs français en Europe',
+    footer_uefa_desc: 'Champions League, Europa, C4 — tous les résultats et classements UEFA des clubs français',
+    footer_gh_title: 'Code source',
   },
   en: {
     nav_fixtures: 'Matches',       nav_teams: 'Teams',
@@ -125,6 +128,9 @@ const I18N = {
     dl_btn: 'Download',
     sources_h3: 'Detailed sources',
     load_error: '⚠️ Unable to load data.<br>Make sure the local server is running and JSON files are present.',
+    footer_uefa_title: 'French clubs in Europe',
+    footer_uefa_desc: 'Champions League, Europa, C4 — all results and UEFA standings for French clubs',
+    footer_gh_title: 'Source code',
   },
 };
 
@@ -155,6 +161,51 @@ function initLang() {
     btn.classList.toggle('active', btn.dataset.lang === LANG);
     btn.addEventListener('click', () => setLang(btn.dataset.lang));
   });
+}
+
+// ── Team name translations (EN → FR) ─────────────────────────────────
+const TEAM_FR_NAMES = {
+  'Algeria':                'Algérie',
+  'Argentina':              'Argentine',
+  'Australia':              'Australie',
+  'Austria':                'Autriche',
+  'Belgium':                'Belgique',
+  'Bosnia and Herzegovina': 'Bosnie-Herzégovine',
+  'Brazil':                 'Brésil',
+  'Cape Verde':             'Cap-Vert',
+  'Colombia':               'Colombie',
+  'Croatia':                'Croatie',
+  'Czech Republic':         'République tchèque',
+  'DR Congo':               'RD Congo',
+  'Ecuador':                'Équateur',
+  'Egypt':                  'Égypte',
+  'England':                'Angleterre',
+  'Germany':                'Allemagne',
+  'Haiti':                  'Haïti',
+  'Iraq':                   'Irak',
+  'Ivory Coast':            "Côte d'Ivoire",
+  'Japan':                  'Japon',
+  'Jordan':                 'Jordanie',
+  'Mexico':                 'Mexique',
+  'Morocco':                'Maroc',
+  'Netherlands':            'Pays-Bas',
+  'New Zealand':            'Nouvelle-Zélande',
+  'Norway':                 'Norvège',
+  'Saudi Arabia':           'Arabie saoudite',
+  'Scotland':               'Écosse',
+  'Senegal':                'Sénégal',
+  'South Africa':           'Afrique du Sud',
+  'South Korea':            'Corée du Sud',
+  'Spain':                  'Espagne',
+  'Sweden':                 'Suède',
+  'Switzerland':            'Suisse',
+  'Tunisia':                'Tunisie',
+  'United States':          'États-Unis',
+  'Uzbekistan':             'Ouzbékistan',
+};
+
+function dn(name) {
+  return LANG === 'fr' ? (TEAM_FR_NAMES[name] || name) : name;
 }
 
 // ── State ────────────────────────────────────────────────────────────
@@ -336,7 +387,7 @@ function renderFixtures() {
       <div class="group-team-row">
         <a href="#/team/${encodeURIComponent(t.slug)}">
           ${flagImg(t.iso2, t.name, 'flag-sm')}
-          <span class="team-name">${t.name}</span>
+          <span class="team-name">${dn(t.name)}</span>
           <span class="elo-badge" title="Score Elo — indicateur de forme depuis 2022">Elo ${t.elo}</span>
         </a>
       </div>`).join('');
@@ -349,13 +400,13 @@ function renderFixtures() {
           <div class="match-date">${formatDate(m.date)}${m.city ? ' · ' + m.city : ''}</div>
           <div class="match-teams">
             <div class="match-team home">
-              <span>${m.home}</span>
+              <span>${dn(m.home)}</span>
               ${flagImg(m.home_iso2, m.home, 'flag-sm')}
             </div>
             <div class="match-vs">vs</div>
             <div class="match-team away">
               ${flagImg(m.away_iso2, m.away, 'flag-sm')}
-              <span>${m.away}</span>
+              <span>${dn(m.away)}</span>
             </div>
           </div>
         </div>`;
@@ -398,7 +449,7 @@ function renderTeam(slug) {
     <div class="team-header">
       ${flagImg(team.iso2, team.name, 'team-flag-lg')}
       <div class="team-title">
-        <h1>${team.name}</h1>
+        <h1>${dn(team.name)}</h1>
         <div class="team-meta">
           <span class="badge badge-group">${t('group')} ${team.group}</span>
           <span class="badge badge-elo">Elo ${team.elo}</span>
@@ -474,7 +525,7 @@ function buildMatchesTable(matches) {
       <td>${formatDate(m.date)}</td>
       <td><div class="opponent-cell">
         ${flagImg(m.opp_iso2, m.opponent, 'flag-opponent')}
-        <a href="#/team/${encodeURIComponent(slugify(m.opponent))}">${m.opponent}</a>
+        <a href="#/team/${encodeURIComponent(slugify(m.opponent))}">${dn(m.opponent)}</a>
         ${loc}
       </div></td>
       <td class="score-cell ${m.result}">${score}</td>
@@ -627,7 +678,7 @@ function renderTeamsBody(search = '') {
     const gdColor = gd > 0 ? 'color:var(--win)' : gd < 0 ? 'color:var(--loss)' : '';
     return `<tr>
       <td>${flagImg(t.iso2, t.name, 'flag-sm')}</td>
-      <td><a href="#/team/${encodeURIComponent(t.slug)}">${t.name}</a></td>
+      <td><a href="#/team/${encodeURIComponent(t.slug)}">${dn(t.name)}</a></td>
       <td style="text-align:center;color:var(--muted)">${t.group}</td>
       <td style="text-align:center">${t.s.GP}</td>
       <td style="text-align:center;color:var(--win)">${t.s.W}</td>
@@ -710,11 +761,11 @@ function renderCompare(slug1, slug2) {
         <table class="compare-table">
           <thead><tr>
             <th class="compare-val" style="font-size:.9rem">
-              ${flagImg(t1.iso2, t1.name, 'flag-sm')}&nbsp;${t1.name}
+              ${flagImg(t1.iso2, t1.name, 'flag-sm')}&nbsp;${dn(t1.name)}
             </th>
             <th class="compare-lbl" style="color:var(--muted)">${t('cmp_stat_col')}</th>
             <th class="compare-val" style="font-size:.9rem">
-              ${t2.name}&nbsp;${flagImg(t2.iso2, t2.name, 'flag-sm')}
+              ${dn(t2.name)}&nbsp;${flagImg(t2.iso2, t2.name, 'flag-sm')}
             </th>
           </tr></thead>
           <tbody>${compareRows}</tbody>
@@ -728,11 +779,11 @@ function renderCompare(slug1, slug2) {
 
       <div class="compare-forms">
         <div class="compare-form-col">
-          <h3>${t('form_of', t1.name)}</h3>
+          <h3>${t('form_of', dn(t1.name))}</h3>
           <div class="form-badges">${form1 || '<span style="color:var(--muted)">—</span>'}</div>
         </div>
         <div class="compare-form-col">
-          <h3>${t('form_of', t2.name)}</h3>
+          <h3>${t('form_of', dn(t2.name))}</h3>
           <div class="form-badges">${form2 || '<span style="color:var(--muted)">—</span>'}</div>
         </div>
       </div>`;
@@ -745,14 +796,14 @@ function renderCompare(slug1, slug2) {
       <div class="compare-team-hdr">
         ${flagImg(t1.iso2, t1.name, 'team-flag-lg')}
         <div>
-          <div class="compare-team-name"><a href="#/team/${encodeURIComponent(slug1)}">${t1.name}</a></div>
+          <div class="compare-team-name"><a href="#/team/${encodeURIComponent(slug1)}">${dn(t1.name)}</a></div>
           <div class="compare-team-meta">${t('group')} ${t1.group} · Elo ${t1.elo}</div>
         </div>
       </div>
       <div class="compare-vs">VS</div>
       <div class="compare-team-hdr compare-team-hdr-right">
         <div style="text-align:right">
-          <div class="compare-team-name"><a href="#/team/${encodeURIComponent(slug2)}">${t2.name}</a></div>
+          <div class="compare-team-name"><a href="#/team/${encodeURIComponent(slug2)}">${dn(t2.name)}</a></div>
           <div class="compare-team-meta">${t('group')} ${t2.group} · Elo ${t2.elo}</div>
         </div>
         ${flagImg(t2.iso2, t2.name, 'team-flag-lg')}
@@ -791,7 +842,7 @@ function renderRankings() {
     return `<tr class="${rankClass}">
       <td class="rank-num">${i + 1}</td>
       <td>${flagImg(tk.iso2, tk.name, 'flag-sm')}</td>
-      <td><a href="#/team/${encodeURIComponent(tk.slug)}">${tk.name}</a></td>
+      <td><a href="#/team/${encodeURIComponent(tk.slug)}">${dn(tk.name)}</a></td>
       <td style="color:var(--muted)">${t('group')} ${tk.group}</td>
       <td>
         <div class="elo-bar-wrap">
