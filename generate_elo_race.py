@@ -10,7 +10,7 @@ Dépendances :
 Sortie : data/elo_race.mp4  (ou data/elo_race.gif si ffmpeg absent)
 """
 
-import csv, json, shutil
+import copy, csv, json
 from collections import defaultdict
 from pathlib import Path
 
@@ -176,14 +176,13 @@ def main():
     output_mp4 = ROOT / "data" / "elo_race.mp4"
     output_gif = ROOT / "data" / "elo_race.gif"
 
-    if shutil.which("ffmpeg"):
-        bcr.bar_chart_race(filename=str(output_mp4), **race_kwargs)
+    try:
+        bcr.bar_chart_race(filename=str(output_mp4), **copy.deepcopy(race_kwargs))
         print(f"\n  ✓ Sauvegardé → {output_mp4}")
-    else:
-        print("  ℹ️  ffmpeg absent → génération GIF (plus lent, fichier plus lourd)")
-        bcr.bar_chart_race(filename=str(output_gif), **race_kwargs)
+    except Exception as e:
+        print(f"  ⚠ MP4 échoué ({e!r}) → fallback GIF")
+        bcr.bar_chart_race(filename=str(output_gif), **copy.deepcopy(race_kwargs))
         print(f"\n  ✓ Sauvegardé → {output_gif}")
-        print("  ℹ️  Pour un MP4 : installer ffmpeg puis relancer")
 
 
 if __name__ == "__main__":
