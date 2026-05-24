@@ -1038,9 +1038,10 @@ function renderRankings() {
           ? 'Animation Bar Chart Race — scores Elo annuels des 48 équipes qualifiées pour la Coupe du Monde 2026.'
           : 'Bar Chart Race animation — annual Elo scores for the 48 WC 2026 qualified teams.'}
       </p>
-      <img class="elo-race-video" src="./data/elo_race.gif" loading="lazy"
-           onerror="this.closest('.race-section').style.display='none'"
-           alt="Bar Chart Race Elo 1872–2026">
+      <video class="elo-race-video" autoplay loop muted playsinline
+             src="./data/elo_race.mp4"
+             onerror="this.closest('.race-section').style.display='none'">
+      </video>
     </div>`;
 }
 
