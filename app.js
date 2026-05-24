@@ -213,7 +213,7 @@ function dn(name) {
 // ── State ────────────────────────────────────────────────────────────
 let DATA = null;
 let currentSlug = null;
-let sliderPeriod = 15;
+let sliderPeriod = 50;
 let teamsSort = { col: 'elo', dir: 'desc' };
 let teamsPeriod = 'all';
 let teamsSlider = null;
@@ -323,10 +323,11 @@ function computeStatsFrom(matches) {
 }
 
 function getTeamStats(team, period) {
-  if (period === 'all')    return team.stats?.all      || null;
-  if (period === '2025')   return team.stats?.['2025'] || null;
-  if (period === '2026')   return team.stats?.['2026'] || null;
-  if (period === 'qualifs') return team.stats?.qualifs || null;
+  if (period === 'all')      return team.stats?.all       || null;
+  if (period === '2025')     return team.stats?.['2025']  || null;
+  if (period === '2026')     return team.stats?.['2026']  || null;
+  if (period === 'qualifs')  return team.stats?.qualifs   || null;
+  if (period === 'all_time') return team.stats?.all_time  || null;
   return null;
 }
 
