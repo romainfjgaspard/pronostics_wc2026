@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 6 Elo ranking)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7–P10 à faire (PLAN_CORRECTIONS.md)
+**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 7 page Données)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8–P10 à faire (PLAN_CORRECTIONS.md)
 
 ---
 
@@ -553,6 +553,26 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 
 ---
 
+### Session 2026-05-25 — Phase 7 : Page Données
+
+**Fichier modifié :** `app.js`
+
+**7.1 — Suppression du bandeau infoBanner :**
+- `const infoBanner = ...` (~20 lignes) supprimé
+- `<div class="info-banner">${infoBanner}</div>` supprimé du `app.innerHTML`
+
+**7.2 — Descriptions datasets corrigées :**
+- FR "Fiches équipes" : `depuis 2022, 2025, 2026, qualifs` → `depuis 1872, qualifs CDM` + `score Elo calculé depuis 1872`
+- FR "Résultats historiques" : `dont WC 2022, Euro 2024…` → `couvrant toutes les compétitions depuis leur création : Coupe du Monde, Euro, Copa América, CAN, Ligue des Nations, qualifications, amicaux…`
+- EN : mêmes corrections (since 1872, WC qualifiers, Elo calculated since 1872 ; all competitions since creation)
+
+**7.3 — Section méthodologie Elo :**
+- 4e `<li>` ajouté dans `sourcesHtml` FR et EN : "Score Elo — méthodologie détaillée" avec K-facteurs détaillés (Euro/Copa/CAN/Asie ×50), avantage domicile, score initial
+
+**Prochaines étapes :** P8 (drapeaux w320, badge FIFA, forme droite), P9 (README), P10 (Quiz)
+
+---
+
 ## Plan d'actions — restant (`NOUVEAU_PLAN.md`)
 
 > Remplace l'ancien `PLAN.md`. Détail complet (code exact, lignes à modifier, tests, commits) dans `NOUVEAU_PLAN.md`.
@@ -574,4 +594,5 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 | **P4** | Équipes : `init()` charge `fifa_ranking.json` au boot (map iso2→rang), contrôles en flex-row, colonne FIFA cliquable | ✅ Fait (2026-05-25) |
 | **P5** | FIFA ranking : noms FR (`dn()`), select → slider (1992–2026), BCR vidéo déplacée en haut | ✅ Fait (2026-05-25) |
 | **P6** | Elo ranking : `elo_sub` raccourci, explainer → lien Données, BCR en haut, slider 1872–2025, `elo_ranking_history.json` (155 snapshots) | ✅ Fait (2026-05-25) |
-| **P7–P10** | Données, équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
+| **P7** | Données : suppression infoBanner, descriptions "depuis 1872", section méthodologie Elo détaillée | ✅ Fait (2026-05-25) |
+| **P8–P10** | Équipe HD, README, Quiz — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |

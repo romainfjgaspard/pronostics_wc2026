@@ -1367,18 +1367,18 @@ function renderData() {
 
   const datasets = LANG === 'en' ? [
     { file: 'fixtures.json',     label: 'WC 2026 Matches',       desc: '72 group stage matches: dates, cities, teams, Elo score.',                                                                                          icon: '📅', type: 'JSON' },
-    { file: 'teams.json',        label: 'Team profiles',          desc: '48 qualified teams: stats by period (since 2022, 2025, 2026, WC qualifiers), last 30 matches, Elo score.',                                          icon: '🏳️', type: 'JSON' },
+    { file: 'teams.json',        label: 'Team profiles',          desc: '48 qualified teams: stats by period (since 1872, WC qualifiers), last 30 matches, Elo score calculated since 1872.',                              icon: '🏳️', type: 'JSON' },
     { file: 'groups.json',       label: 'Groups',                 desc: '12 groups with squad composition and Elo score for each team.',                                                                                     icon: '📋', type: 'JSON' },
     { file: 'rankings.json',     label: 'Elo Ranking',            desc: '48 teams ranked by Elo score (calculated from complete international football history since 1872).',                                     icon: '📊', type: 'JSON' },
     { file: 'fifa_ranking.json', label: 'FIFA Ranking',           desc: 'Official FIFA ranking (211 national teams) with points and confederation.',                                                                         icon: '🏆', type: 'JSON' },
-    { file: 'results.csv',       label: 'Historical results',     desc: 'Complete history of international football since 1872 — 49,329 matches including WC 2022, Euro 2024, Copa América, AFCON, Nations League, WC 2026 qualifiers, friendlies…', icon: '📰', type: 'CSV'  },
+    { file: 'results.csv',       label: 'Historical results',     desc: 'Complete history of international football since 1872 — 49,329 matches covering all competitions since their creation: FIFA World Cup, Euro, Copa América, AFCON, Nations League, qualifiers, friendlies…', icon: '📰', type: 'CSV'  },
   ] : [
     { file: 'fixtures.json',     label: 'Matchs WC 2026',         desc: '72 matchs de phase de groupes : dates, villes, équipes, score Elo.',                                                                               icon: '📅', type: 'JSON' },
-    { file: 'teams.json',        label: 'Fiches équipes',          desc: '48 équipes qualifiées : stats par période (depuis 2022, 2025, 2026, qualifs), 30 derniers matchs, score Elo.',                                     icon: '🏳️', type: 'JSON' },
+    { file: 'teams.json',        label: 'Fiches équipes',          desc: '48 équipes qualifiées : stats par période (depuis 1872, qualifs CDM), 30 derniers matchs, score Elo calculé depuis 1872.',                        icon: '🏳️', type: 'JSON' },
     { file: 'groups.json',       label: 'Groupes',                 desc: '12 groupes avec la composition et le score Elo de chaque équipe.',                                                                                 icon: '📋', type: 'JSON' },
     { file: 'rankings.json',     label: 'Classement Elo',          desc: '48 équipes classées par score Elo (calculé sur l\'historique complet du football international depuis 1872).',                                     icon: '📊', type: 'JSON' },
     { file: 'fifa_ranking.json', label: 'Classement FIFA',         desc: 'Classement FIFA officiel (211 sélections) avec points et confédération.',                                                                          icon: '🏆', type: 'JSON' },
-    { file: 'results.csv',       label: 'Résultats historiques',   desc: 'Historique complet du football international depuis 1872 — 49 329 matchs dont WC 2022, Euro 2024, Copa América, CAN, qualifications, amicaux…',  icon: '📰', type: 'CSV'  },
+    { file: 'results.csv',       label: 'Résultats historiques',   desc: 'Historique complet du football international depuis 1872 — 49 329 matchs couvrant toutes les compétitions depuis leur création : Coupe du Monde, Euro, Copa América, CAN, Ligue des Nations, qualifications, amicaux…',  icon: '📰', type: 'CSV'  },
   ];
 
   const cards = datasets.map(d => `
@@ -1395,27 +1395,6 @@ function renderData() {
       <code class="data-filename">data/${d.file}</code>
     </div>`).join('');
 
-  const infoBanner = LANG === 'en' ? `
-    <strong>Results</strong> —
-    <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
-    (CC0, active — last commit May 2026) · complete history since 1872 (49,329 matches),
-    including 108 real 2026 results + 72 WC 2026 fixtures.
-    &nbsp;&nbsp;<strong>FIFA Ranking</strong> — Official API
-    <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
-    · 211 nations · April 2026 · France #1
-    (vs cnc8 repo: abandoned since 2021, 2020 data, Belgium #1).
-    &nbsp;&nbsp;<strong>Elo Score</strong> — custom calculation, K-factors WC×60 · tournaments×50 · qualifiers×35 · friendlies×20.
-  ` : `
-    <strong>Résultats</strong> —
-    <a href="https://github.com/martj42/international_results" target="_blank" class="ext-link">martj42/international_results</a>
-    (CC0, actif — dernier commit mai 2026) · historique complet depuis 1872 (49 329 matchs),
-    dont 108 résultats 2026 + 72 fixtures WC 2026.
-    &nbsp;&nbsp;<strong>Classement FIFA</strong> — API officielle
-    <a href="https://inside.fifa.com/fr/fifa-world-ranking/men" target="_blank" class="ext-link">inside.fifa.com</a>
-    · 211 sélections · avril 2026 · France #1
-    (vs repo cnc8 : abandonné depuis 2021, données de 2020, Belgique #1).
-    &nbsp;&nbsp;<strong>Score Elo</strong> — calcul maison, K-facteurs WC×60 · tournois×50 · qualifs×35 · amicaux×20.
-  `;
 
   const sourcesHtml = LANG === 'en' ? `
     <ul>
@@ -1439,6 +1418,14 @@ function renderData() {
         <strong>Elo Score</strong>: custom calculation — not available in public datasets.
         K-factors WC×60 · tournaments×50 · qualifiers×35 · friendlies×20 ·
         home advantage +75 (neutralized on neutral ground) · initial score 1,500.
+      </li>
+      <li>
+        <strong>Elo Score — detailed methodology</strong>:
+        ranking system adapted to football, calculated from all 49,329 matches since 1872.
+        Each team starts at <strong>1,500 pts</strong>. After each match, points are exchanged
+        based on the result and the Elo gap.
+        <br>K-factors: FIFA World Cup ×60 · Euro/Copa/AFCON/Asia ×50 · Qualifiers/Nations League ×35 · Friendlies ×20.
+        <br>Home advantage: +75 pts (cancelled on neutral ground). Initial score: 1,500 per team.
       </li>
     </ul>
   ` : `
@@ -1464,6 +1451,14 @@ function renderData() {
         K-facteurs WC×60 · tournois×50 · qualifs×35 · amicaux×20 ·
         avantage terrain +75 (neutralisé sur terrain neutre) · score initial 1 500.
       </li>
+      <li>
+        <strong>Score Elo — méthodologie détaillée</strong> :
+        système de classement adapté au football, calculé sur l'ensemble des 49 329 matchs depuis 1872.
+        Chaque équipe démarre à <strong>1 500 pts</strong>. Après chaque match, les points sont échangés
+        selon le résultat et l'écart Elo.
+        <br>K-facteurs : Coupe du Monde ×60 · Euro/Copa/CAN/Asie ×50 · Qualifs/Nations League ×35 · Amicaux ×20.
+        <br>Avantage domicile : +75 pts (annulé sur terrain neutre). Score initial : 1 500 par équipe.
+      </li>
     </ul>
   `;
 
@@ -1472,8 +1467,6 @@ function renderData() {
       <h1>${t('data_h1')}</h1>
       <p>${t('data_sub')}</p>
     </div>
-
-    <div class="info-banner">${infoBanner}</div>
 
     <div class="data-grid">${cards}</div>
 
