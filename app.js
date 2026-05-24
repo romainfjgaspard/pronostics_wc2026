@@ -384,7 +384,7 @@ function setActiveNav(hash) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
-const FLAG_BASE = 'https://flagcdn.com/w40/';
+const FLAG_BASE = './data/flags/';
 
 function flagImg(iso2, name, cls = 'flag-sm') {
   if (!iso2) return `<span class="${cls}" style="display:inline-block;background:var(--surface2);border-radius:2px;"></span>`;

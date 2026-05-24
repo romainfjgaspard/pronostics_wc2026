@@ -116,7 +116,7 @@ def main() -> None:
         fixed_order=False,
         fixed_max=False,
         steps_per_period=8,
-        period_length=1000,
+        period_length=667,
         interpolate_period=True,
         label_bars=True,
         bar_size=0.85,
