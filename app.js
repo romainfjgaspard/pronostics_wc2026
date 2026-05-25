@@ -511,7 +511,8 @@ function filterMatchesByYears(matches, minYear, maxYear) {
 
 function filterMatchesQualifs(matches) {
   return matches.filter(m =>
-    m.tournament === 'FIFA World Cup qualification'
+    m.tournament === 'FIFA World Cup qualification' &&
+    parseInt(m.date.slice(0, 4), 10) >= 2023
   );
 }
 
@@ -635,16 +636,7 @@ async function renderTeam(slug) {
           ${t('year_slider_label', teamYearMin, teamYearMax, team.matches.length)}
         </div>
         <div class="controls-inline-row">
-          <div class="dual-slider-row" style="flex:1">
-            <span class="year-edge">1872</span>
-            <div class="dual-slider-track">
-              <input type="range" class="year-slider year-slider-min" id="year-min-team"
-                     min="1872" max="2026" value="${teamYearMin}">
-              <input type="range" class="year-slider year-slider-max" id="year-max-team"
-                     min="1872" max="2026" value="${teamYearMax}">
-            </div>
-            <span class="year-edge">2026</span>
-          </div>
+          <div id="noui-team" style="flex:1;margin:0 10px 0 0"></div>
           <button class="period-btn ${teamQualifsMode ? 'active' : ''}" id="btn-qualifs-team">
             ${t('btn_qualifs_cdm')}
           </button>
@@ -690,35 +682,28 @@ async function renderTeam(slug) {
 
   applyTeamFilters();
 
-  const minSlider = app.querySelector('#year-min-team');
-  const maxSlider = app.querySelector('#year-max-team');
+  const nouiTeam  = app.querySelector('#noui-team');
   const qualifBtn = app.querySelector('#btn-qualifs-team');
 
-  if (minSlider) {
-    minSlider.addEventListener('input', () => {
-      teamYearMin = parseInt(minSlider.value, 10);
-      if (teamYearMin > teamYearMax) { teamYearMax = teamYearMin; maxSlider.value = teamYearMax; }
+  if (nouiTeam) {
+    noUiSlider.create(nouiTeam, {
+      start: [teamYearMin, teamYearMax],
+      connect: true, step: 1,
+      range: { min: 1872, max: 2026 },
+    });
+    nouiTeam.noUiSlider.on('slide', (values) => {
+      teamYearMin = Math.round(+values[0]);
+      teamYearMax = Math.round(+values[1]);
       teamQualifsMode = false;
       qualifBtn?.classList.remove('active');
       applyTeamFilters();
     });
   }
-  if (maxSlider) {
-    maxSlider.addEventListener('input', () => {
-      teamYearMax = parseInt(maxSlider.value, 10);
-      if (teamYearMax < teamYearMin) { teamYearMin = teamYearMax; minSlider.value = teamYearMin; }
-      teamQualifsMode = false;
-      qualifBtn?.classList.remove('active');
-      applyTeamFilters();
-    });
-  }
-  if (qualifBtn) {
-    qualifBtn.addEventListener('click', () => {
-      teamQualifsMode = !teamQualifsMode;
-      qualifBtn.classList.toggle('active', teamQualifsMode);
-      applyTeamFilters();
-    });
-  }
+  qualifBtn?.addEventListener('click', () => {
+    teamQualifsMode = !teamQualifsMode;
+    qualifBtn.classList.toggle('active', teamQualifsMode);
+    applyTeamFilters();
+  });
 }
 
 function buildMatchesTable(matches) {
@@ -777,16 +762,7 @@ async function renderTeams() {
         <div class="year-slider-label" id="year-label-teams">
           ${t('year_slider_label', teamsYearMin, teamsYearMax, 0)}
         </div>
-        <div class="dual-slider-row">
-          <span class="year-edge">1872</span>
-          <div class="dual-slider-track">
-            <input type="range" class="year-slider year-slider-min" id="year-min-teams"
-                   min="1872" max="2026" value="${teamsYearMin}">
-            <input type="range" class="year-slider year-slider-max" id="year-max-teams"
-                   min="1872" max="2026" value="${teamsYearMax}">
-          </div>
-          <span class="year-edge">2026</span>
-        </div>
+        <div id="noui-teams"></div>
       </div>
       <button class="period-btn ${teamsQualifsMode ? 'active' : ''}" id="btn-qualifs-teams"
               style="flex-shrink:0;align-self:flex-end;margin-bottom:4px">
@@ -814,32 +790,30 @@ async function renderTeams() {
 
   renderTeamsBody();
 
-  const minSl = app.querySelector('#year-min-teams');
-  const maxSl = app.querySelector('#year-max-teams');
-  const qualBtn = app.querySelector('#btn-qualifs-teams');
+  const nouiTeams  = app.querySelector('#noui-teams');
+  const qualBtn    = app.querySelector('#btn-qualifs-teams');
   const searchInput = app.querySelector('#teams-search');
   let teamsSliderTimer = null;
 
-  function onYearChange() {
-    teamsQualifsMode = false;
-    qualBtn?.classList.remove('active');
-    clearTimeout(teamsSliderTimer);
-    teamsSliderTimer = setTimeout(() => {
-      renderTeamsBody(searchInput?.value || '');
-      updateTeamsSortHeaders();
-    }, 60);
+  if (nouiTeams) {
+    noUiSlider.create(nouiTeams, {
+      start: [teamsYearMin, teamsYearMax],
+      connect: true, step: 1,
+      range: { min: 1872, max: 2026 },
+    });
+    nouiTeams.noUiSlider.on('slide', (values) => {
+      teamsYearMin = Math.round(+values[0]);
+      teamsYearMax = Math.round(+values[1]);
+      teamsQualifsMode = false;
+      qualBtn?.classList.remove('active');
+      clearTimeout(teamsSliderTimer);
+      teamsSliderTimer = setTimeout(() => {
+        renderTeamsBody(searchInput?.value || '');
+        updateTeamsSortHeaders();
+      }, 60);
+    });
   }
 
-  minSl?.addEventListener('input', () => {
-    teamsYearMin = parseInt(minSl.value, 10);
-    if (teamsYearMin > teamsYearMax) { teamsYearMax = teamsYearMin; maxSl.value = teamsYearMax; }
-    onYearChange();
-  });
-  maxSl?.addEventListener('input', () => {
-    teamsYearMax = parseInt(maxSl.value, 10);
-    if (teamsYearMax < teamsYearMin) { teamsYearMin = teamsYearMax; minSl.value = teamsYearMin; }
-    onYearChange();
-  });
   qualBtn?.addEventListener('click', () => {
     teamsQualifsMode = !teamsQualifsMode;
     qualBtn.classList.toggle('active', teamsQualifsMode);
@@ -1066,16 +1040,7 @@ async function renderCompare(slug1, slug2) {
           ${t('year_slider_label', cmpYearMin, cmpYearMax, 0)}
         </div>
         <div class="controls-inline-row">
-          <div class="dual-slider-row" style="flex:1">
-            <span class="year-edge">1872</span>
-            <div class="dual-slider-track">
-              <input type="range" class="year-slider year-slider-min" id="year-min-cmp"
-                     min="1872" max="2026" value="${cmpYearMin}">
-              <input type="range" class="year-slider year-slider-max" id="year-max-cmp"
-                     min="1872" max="2026" value="${cmpYearMax}">
-            </div>
-            <span class="year-edge">2026</span>
-          </div>
+          <div id="noui-cmp" style="flex:1;margin:0 10px 0 0"></div>
           <button class="period-btn ${cmpQualifsMode ? 'active' : ''}" id="btn-qualifs-cmp">
             ${t('btn_qualifs_cdm')}
           </button>
@@ -1106,24 +1071,23 @@ async function renderCompare(slug1, slug2) {
 
   applyCmpFilters();
 
-  const minSlCmp = app.querySelector('#year-min-cmp');
-  const maxSlCmp = app.querySelector('#year-max-cmp');
+  const nouiCmp   = app.querySelector('#noui-cmp');
   const qualBtnCmp = app.querySelector('#btn-qualifs-cmp');
 
-  minSlCmp?.addEventListener('input', () => {
-    cmpYearMin = parseInt(minSlCmp.value, 10);
-    if (cmpYearMin > cmpYearMax) { cmpYearMax = cmpYearMin; maxSlCmp.value = cmpYearMax; }
-    cmpQualifsMode = false;
-    qualBtnCmp?.classList.remove('active');
-    applyCmpFilters();
-  });
-  maxSlCmp?.addEventListener('input', () => {
-    cmpYearMax = parseInt(maxSlCmp.value, 10);
-    if (cmpYearMax < cmpYearMin) { cmpYearMin = cmpYearMax; minSlCmp.value = cmpYearMin; }
-    cmpQualifsMode = false;
-    qualBtnCmp?.classList.remove('active');
-    applyCmpFilters();
-  });
+  if (nouiCmp) {
+    noUiSlider.create(nouiCmp, {
+      start: [cmpYearMin, cmpYearMax],
+      connect: true, step: 1,
+      range: { min: 1872, max: 2026 },
+    });
+    nouiCmp.noUiSlider.on('slide', (values) => {
+      cmpYearMin = Math.round(+values[0]);
+      cmpYearMax = Math.round(+values[1]);
+      cmpQualifsMode = false;
+      qualBtnCmp?.classList.remove('active');
+      applyCmpFilters();
+    });
+  }
   qualBtnCmp?.addEventListener('click', () => {
     cmpQualifsMode = !cmpQualifsMode;
     qualBtnCmp.classList.toggle('active', cmpQualifsMode);

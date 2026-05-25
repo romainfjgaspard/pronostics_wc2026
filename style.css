@@ -285,73 +285,30 @@ img { display: block; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
 }
-.year-edge {
-  font-size: .75rem;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.dual-slider-track {
-  position: relative;
-  flex: 1;
-  height: 4px;
-  overflow: visible;
-}
-.dual-slider-track::before {
-  content: '';
-  position: absolute;
-  inset: 0;
+
+/* ── noUiSlider — thème sombre ──────────────────────────────────── */
+.noUi-target {
   background: var(--surface2);
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 1;
+  border: none;
+  box-shadow: none;
+  border-radius: 3px;
+  margin: 10px 0;
 }
-.year-slider {
-  position: absolute;
-  width: 100%;
-  height: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  left: 0;
-  margin: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  pointer-events: none;
-  z-index: 2;
-}
-.year-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  pointer-events: all;
+.noUi-horizontal { height: 4px; }
+.noUi-connects   { border-radius: 3px; }
+.noUi-connect    { background: var(--accent); opacity: .25; }
+.noUi-horizontal .noUi-handle {
   width: 20px; height: 20px;
+  right: -10px; top: -8px;
   border-radius: 50%;
   background: var(--accent);
-  cursor: pointer;
   border: 2px solid var(--bg);
-  box-shadow: 0 0 4px rgba(0,0,0,.5);
-  position: relative; z-index: 3;
+  box-shadow: 0 0 6px rgba(0,0,0,.6);
+  cursor: grab;
 }
-.year-slider::-webkit-slider-runnable-track {
-  background: transparent;
-  height: 4px;
-}
-.year-slider::-moz-range-thumb {
-  pointer-events: all;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: var(--accent);
-  cursor: pointer;
-  border: 2px solid var(--bg);
-  box-shadow: 0 0 4px rgba(0,0,0,.5);
-}
-.year-slider::-moz-range-track {
-  background: transparent;
-  height: 4px;
-}
-.year-slider-min { z-index: 2; }
-.year-slider-max { z-index: 3; }
+.noUi-handle:active { cursor: grabbing; }
+.noUi-handle::before, .noUi-handle::after { display: none; }
 
 /* ─────────────────────────────────────────────
    Stats grid
