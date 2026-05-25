@@ -1137,8 +1137,8 @@ async function renderRankings() {
       </h2>
       <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px">
         ${LANG === 'fr'
-          ? 'Animation Bar Chart Race — scores Elo annuels des 48 équipes qualifiées pour la Coupe du Monde 2026.'
-          : 'Bar Chart Race animation — annual Elo scores for the 48 WC 2026 qualified teams.'}
+          ? 'Animation Line Chart Race — évolution du score Elo des 10 meilleures équipes WC 2026 depuis 1872.'
+          : 'Line Chart Race animation — Elo score evolution of the top 10 WC 2026 teams since 1872.'}
       </p>
       <div class="race-speed-btns">
         <span style="font-size:.8rem;color:var(--muted)">${LANG === 'fr' ? 'Vitesse' : 'Speed'} :</span>
@@ -1147,7 +1147,7 @@ async function renderRankings() {
         <button class="speed-btn" data-rate="2">2×</button>
       </div>
       <video class="elo-race-video" id="elo-race-video" loop muted playsinline controls
-             src="./data/elo_race.mp4"
+             src="./data/elo_line_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
     </div>
