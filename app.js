@@ -1454,6 +1454,10 @@ function renderData() {
       <li>
         <strong>Initial score</strong>: 1,500 pts per team.
       </li>
+      <li>
+        Inspired by the
+        <a href="https://fr.wikipedia.org/wiki/Classement_mondial_de_football_Elo" target="_blank" class="ext-link">Elo world football ranking (Wikipedia)</a>.
+      </li>
     </ul>
   ` : `
     <ul>
@@ -1471,6 +1475,10 @@ function renderData() {
       </li>
       <li>
         <strong>Score initial</strong> : 1 500 pts par équipe.
+      </li>
+      <li>
+        Inspiré du
+        <a href="https://fr.wikipedia.org/wiki/Classement_mondial_de_football_Elo" target="_blank" class="ext-link">classement mondial de football Elo (Wikipédia)</a>.
       </li>
     </ul>
   `;

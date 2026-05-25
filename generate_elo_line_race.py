@@ -1,18 +1,18 @@
 """
 generate_elo_line_race.py
-Génère une animation Line Chart Race du score Elo des 48 équipes WC 2026 (1872–2026).
-Source : data/elo_ranking_history.json
+Animation Line Chart Race du score Elo mondial depuis 1872.
+Toutes les équipes jamais dans le top 10 mondial — drapeaux sur le top 10 courant.
 
 Dépendances :
-    pip install matplotlib numpy
-    (MP4) : ffmpeg disponible dans le PATH  — sudo apt install ffmpeg
-    (GIF) : pip install Pillow
+    pip install matplotlib numpy Pillow
+    (MP4) : ffmpeg dans le PATH — sudo apt install ffmpeg
 
-Sortie : data/elo_line_race.mp4  (ou data/elo_line_race_test.gif avec --test)
+Source : data/elo_global_history.json (généré par generate_web_data.py)
+Sortie : data/elo_line_race.mp4
 
 Usage :
-    python3 generate_elo_line_race.py           # animation complète MP4 (~52s)
-    python3 generate_elo_line_race.py --test    # aperçu GIF rapide (30 premières années)
+    python3 generate_elo_line_race.py           # animation complète MP4
+    python3 generate_elo_line_race.py --test    # aperçu GIF (50 dernières années)
 """
 
 import json
@@ -23,22 +23,78 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.image
 from matplotlib.animation import FuncAnimation, FFMpegWriter, PillowWriter
+from PIL import Image
 
-ROOT = Path(__file__).parent
+ROOT     = Path(__file__).parent
+FLAG_DIR = ROOT / "data" / "flags"
 
-BG          = "#0f172a"
-SURFACE2    = "#1e293b"
-FG          = "#f1f5f9"
-MUTED       = "#cbd5e1"   # slate-300, lisible sur fond sombre
-DIM         = "#64748b"   # slate-500, pour éléments secondaires (grid, refline)
+BG       = "#0f172a"
+SURFACE2 = "#1e293b"
+FG       = "#f1f5f9"
+MUTED    = "#cbd5e1"
+DIM      = "#64748b"
 
-TOP_N           = 10
-STEPS_PER_YEAR  = 8
-FPS             = 36   # 24 × 1.5 — vitesse d'origine accélérée par 1.5
+KEEP_TEAMS: set[str] = {
+    "Argentina", "England", "Brazil", "Germany", "Italy",
+    "Spain", "Netherlands", "Uruguay", "Belgium", "France",
+    "Portugal",
+}
+TOP_HIGHLIGHT  = 10   # nb d'équipes avec flags+labels à chaque instant
+STEPS_PER_YEAR = 8
+FPS            = 24
+FLAG_HEIGHT_PX = 11   # hauteur d'affichage des drapeaux en pixels
 
-# Couleurs maillot domicile (mêmes que generate_fifa_race.py)
+# ISO2 pour les drapeaux — équipes WC 2026 + équipes historiques
+TEAM_ISO2: dict[str, str] = {
+    "Argentina": "ar", "Brazil": "br", "Uruguay": "uy", "Colombia": "co",
+    "Ecuador": "ec", "Chile": "cl", "Paraguay": "py", "Peru": "pe",
+    "Mexico": "mx", "United States": "us", "Canada": "ca", "Panama": "pa",
+    "Costa Rica": "cr", "Haiti": "ht", "Curaçao": "cw",
+    "Trinidad and Tobago": "tt",
+    "Germany": "de", "France": "fr", "Spain": "es", "Portugal": "pt",
+    "Netherlands": "nl", "Belgium": "be", "Italy": "it", "England": "gb-eng",
+    "Switzerland": "ch", "Croatia": "hr", "Denmark": "dk", "Poland": "pl",
+    "Sweden": "se", "Norway": "no", "Austria": "at", "Czech Republic": "cz",
+    "Scotland": "gb-sct", "Wales": "gb-wls", "Northern Ireland": "gb-nir",
+    "Hungary": "hu", "Romania": "ro", "Russia": "ru",
+    "Turkey": "tr",
+    "Morocco": "ma", "Senegal": "sn", "Algeria": "dz", "Egypt": "eg",
+    "Tunisia": "tn", "South Africa": "za", "DR Congo": "cd", "Ghana": "gh",
+    "Ivory Coast": "ci",
+    "Japan": "jp", "South Korea": "kr", "Australia": "au", "Iran": "ir",
+    "Saudi Arabia": "sa", "Qatar": "qa", "Iraq": "iq", "Uzbekistan": "uz",
+    "Jordan": "jo", "China PR": "cn", "Myanmar": "mm",
+    "New Zealand": "nz", "Tahiti": "pf",
+    # Équipes historiques sans ISO direct → meilleur fallback disponible
+    "Yugoslavia":     "rs",   # Serbie (successeur principal)
+    "Czechoslovakia": "cz",
+    "German DR":      "de",
+    "Basque Country": "es",
+    "Guernsey":       "gb-eng",
+    "Jersey":         "gb-eng",
+}
+
+SHORT_NAMES: dict[str, str] = {
+    "Bosnia and Herzegovina": "Bosnia",
+    "United States":          "USA",
+    "South Africa":           "S. Africa",
+    "Saudi Arabia":           "S. Arabia",
+    "Czech Republic":         "Czechia",
+    "Czechoslovakia":         "Czechoslov.",
+    "DR Congo":               "DR Congo",
+    "New Zealand":            "N. Zealand",
+    "South Korea":            "S. Korea",
+    "Northern Ireland":       "N. Ireland",
+    "Trinidad and Tobago":    "T&T",
+    "Basque Country":         "Basque C.",
+    "German DR":              "E. Germany",
+    "China PR":               "China",
+}
+
 JERSEY_COLORS: dict[str, str] = {
+    # WC 2026
     "Spain": "#C62828", "Argentina": "#6EC6FF", "France": "#1D4ED8",
     "England": "#F5F5F5", "Brazil": "#EAB308", "Portugal": "#9B1C1C",
     "Colombia": "#FACC15", "Netherlands": "#F97316", "Ecuador": "#D4A017",
@@ -50,26 +106,36 @@ JERSEY_COLORS: dict[str, str] = {
     "Austria": "#DC2626", "South Korea": "#DC2626", "Algeria": "#16A34A",
     "Panama": "#DC2626", "Uzbekistan": "#2563EB", "United States": "#1E3A8A",
     "Egypt": "#DC2626", "Scotland": "#1E40AF", "Ivory Coast": "#EA580C",
-    "Sweden": "#FACC15", "Jordan": "#DC2626", "Czech Republic": "#DC2626",
-    "Iraq": "#15803D", "DR Congo": "#38BDF8", "New Zealand": "#111827",
+    "Sweden": "#FACC15", "Czech Republic": "#DC2626",
+    "DR Congo": "#38BDF8", "New Zealand": "#111827",
     "Tunisia": "#DC2626", "Saudi Arabia": "#15803D", "Haiti": "#2563EB",
     "South Africa": "#CA8A04", "Cape Verde": "#2563EB",
     "Bosnia and Herzegovina": "#2563EB", "Qatar": "#7C2D5C",
     "Ghana": "#F9FAFB", "Curaçao": "#2563EB",
+    # Historiques
+    "Italy":              "#1E3A8A",
+    "Hungary":            "#DC2626",
+    "Yugoslavia":         "#2563EB",
+    "Czechoslovakia":     "#DC2626",
+    "German DR":          "#F59E0B",
+    "Romania":            "#FACC15",
+    "Poland":             "#DC2626",
+    "Denmark":            "#DC2626",
+    "Chile":              "#DC2626",
+    "Russia":             "#DC2626",
+    "Wales":              "#DC2626",
+    "Northern Ireland":   "#15803D",
+    "Peru":               "#DC2626",
+    "Costa Rica":         "#DC2626",
+    "Trinidad and Tobago":"#DC2626",
+    "China PR":           "#DC2626",
+    "Myanmar":            "#FACC15",
+    "Tahiti":             "#2563EB",
+    "Basque Country":     "#DC2626",
+    "Guernsey":           "#1D4ED8",
+    "Jersey":             "#DC2626",
 }
 
-SHORT_NAMES: dict[str, str] = {
-    "Bosnia and Herzegovina": "Bosnia",
-    "United States":          "USA",
-    "South Africa":           "S. Africa",
-    "Saudi Arabia":           "S. Arabia",
-    "Czech Republic":         "Czechia",
-    "DR Congo":               "DR Congo",
-    "New Zealand":            "N. Zealand",
-    "South Korea":            "S. Korea",
-}
-
-# Couleurs quasi-blanches illisibles sur fond sombre → gris clair
 WHITE_JERSEYS = {"#F5F5F5", "#E5E7EB", "#F3F4F6", "#F9FAFB", "#F1F5F9"}
 
 
@@ -84,7 +150,6 @@ def _nudge_labels(
     y_min: float,
     y_max: float,
 ) -> dict[str, float]:
-    """Évite le chevauchement vertical des labels (tri décroissant par score)."""
     min_sep = (y_max - y_min) * 0.028
     result: dict[str, float] = {}
     prev = None
@@ -97,116 +162,150 @@ def _nudge_labels(
     return result
 
 
+def _load_flag(name: str) -> np.ndarray | None:
+    iso = TEAM_ISO2.get(name)
+    if not iso:
+        return None
+    path = FLAG_DIR / f"{iso}.png"
+    if not path.exists():
+        return None
+    img = Image.open(path).convert("RGBA")
+    w, h = img.size
+    new_w = max(1, int(w * FLAG_HEIGHT_PX / h))
+    return np.array(img.resize((new_w, FLAG_HEIGHT_PX), Image.LANCZOS))
+
+
 def main() -> None:
     test_mode = "--test" in sys.argv
 
     print("=" * 55)
-    print("  Line Chart Race — Elo Score 1872–2026")
+    print("  Line Chart Race — Elo Score mondial 1872–2026")
     if test_mode:
-        print("  MODE TEST (30 premières années, GIF)")
+        print("  MODE TEST (50 dernières années, GIF)")
     print("=" * 55)
 
-    path = ROOT / "data" / "elo_ranking_history.json"
+    path = ROOT / "data" / "elo_global_history.json"
     if not path.exists():
         print(f"\n❌ {path} introuvable.")
-        print("   Vérifiez que fetch_elo_history.py a bien tourné.")
+        print("   Lancez d'abord : python3 generate_web_data.py")
         return
 
     with open(path, encoding="utf-8") as f:
-        history = json.load(f)
+        data = json.load(f)
 
-    snapshots = history["snapshots"]
-    years     = [s["year"] for s in snapshots]
-    print(f"\n  {len(snapshots)} snapshots chargés ({years[0]} → {years[-1]})")
+    years_all = data["years"]   # list[int]
+    raw_hist  = data["teams"]   # dict[str, list[int]]
 
-    # Top N par Elo final
-    final_elos   = {r["name"]: r["elo"] for r in snapshots[-1]["rankings"]}
-    top_teams    = sorted(final_elos, key=lambda t: final_elos[t], reverse=True)[:TOP_N]
-    print(f"  Top {TOP_N} : {', '.join(top_teams)}")
+    histories = {t: v for t, v in raw_hist.items() if t in KEEP_TEAMS}
+    top_teams = sorted(histories.keys())
+    print(f"\n  {len(top_teams)} équipes sélectionnées : {', '.join(top_teams)}")
+    print(f"  Période : {years_all[0]} → {years_all[-1]}")
 
-    # Matrices Elo : shape (n_snapshots, TOP_N)
-    elo_matrix: dict[str, list[float]] = {team: [] for team in top_teams}
-    for snap in snapshots:
-        snap_elos = {r["name"]: r["elo"] for r in snap["rankings"]}
-        for team in top_teams:
-            elo_matrix[team].append(float(snap_elos.get(team, 1500.0)))
-
-    years_arr = np.array(years, dtype=float)
+    years_arr = np.array(years_all, dtype=float)
 
     if test_mode:
-        n = 30
-        years_arr = years_arr[:n]
-        for team in top_teams:
-            elo_matrix[team] = elo_matrix[team][:n]
+        years_arr = years_arr[-50:]
+        histories = {t: histories[t][-50:] for t in top_teams}
 
-    n_snap         = len(years_arr)
-    n_intervals    = n_snap - 1
-    total_frames   = n_intervals * STEPS_PER_YEAR + 1
+    n_snap       = len(years_arr)
+    n_intervals  = n_snap - 1
+    total_frames = n_intervals * STEPS_PER_YEAR + 1
 
-    # Précomputer les séries interpolées
+    # Précomputer séries interpolées
     xs = np.empty(total_frames)
-    ys: dict[str, np.ndarray] = {team: np.empty(total_frames) for team in top_teams}
+    ys: dict[str, np.ndarray] = {t: np.empty(total_frames) for t in top_teams}
 
     for i in range(n_intervals):
         for step in range(STEPS_PER_YEAR):
             fi = i * STEPS_PER_YEAR + step
-            t  = step / STEPS_PER_YEAR
-            xs[fi] = years_arr[i] + t
+            t_frac = step / STEPS_PER_YEAR
+            xs[fi] = years_arr[i] + t_frac
             for team in top_teams:
-                ys[team][fi] = elo_matrix[team][i] + t * (elo_matrix[team][i + 1] - elo_matrix[team][i])
+                ys[team][fi] = (histories[team][i]
+                                + t_frac * (histories[team][i + 1] - histories[team][i]))
     xs[-1] = years_arr[-1]
     for team in top_teams:
-        ys[team][-1] = elo_matrix[team][-1]
+        ys[team][-1] = histories[team][-1]
 
     print(f"  {total_frames} frames ({total_frames / FPS:.1f}s à {FPS} fps)")
 
-    all_elos = np.concatenate([ys[t] for t in top_teams])
-    y_min    = max(1400.0, float(all_elos.min()) - 60)
-    y_max    = float(all_elos.max()) + 90
-    x_min    = float(years_arr[0])
-    x_max    = float(years_arr[-1])
-    x_pad    = (x_max - x_min) * 0.14  # marge pour les labels à droite
+    all_elos   = np.concatenate([ys[t] for t in top_teams])
+    y_min_fixed = 1650.0
+    y_max_fixed = 2100.0
+    x_min       = float(years_arr[0])
+    x_max       = float(years_arr[-1])
 
     dpi = 80 if test_mode else 120
+
+    # Précharger les drapeaux
+    flag_imgs: dict[str, np.ndarray] = {}
+    for team in top_teams:
+        arr = _load_flag(team)
+        if arr is not None:
+            flag_imgs[team] = arr
+    print(f"  {len(flag_imgs)}/{len(top_teams)} drapeaux chargés")
+
+    # Largeur/hauteur des drapeaux en coordonnées de données (fixe — xlim et ylim fixes)
+    fig_w_px    = 16 * dpi
+    fig_h_px    = 9  * dpi
+    ax_w_px     = fig_w_px * 0.88
+    ax_h_px     = fig_h_px * 0.82
+    x_range     = (x_max + 1) - (x_min - 2)
+    px_per_year = ax_w_px / x_range
+    y_range_fixed = y_max_fixed - y_min_fixed
+    h_elo_fixed   = FLAG_HEIGHT_PX * y_range_fixed / ax_h_px
+
+    flag_w_years: dict[str, float] = {}
+    for team, arr in flag_imgs.items():
+        _, w_px = arr.shape[:2]
+        flag_w_years[team] = w_px / px_per_year
+
     fig = plt.figure(figsize=(16, 9), dpi=dpi)
     fig.patch.set_facecolor(BG)
-
-    # Sous-plot avec marge droite pour les labels
-    ax = fig.add_axes([0.06, 0.09, 0.74, 0.82])
+    ax = fig.add_axes([0.06, 0.09, 0.88, 0.82])
     ax.set_facecolor(BG)
 
-    # Titres fixes
-    fig.text(0.02, 0.97,
-             "Elo Score Evolution — Top 10 WC 2026 Teams",
+    fig.text(0.02, 0.97, "Elo Score Evolution — Greatest Football Nations 1872–2026",
              color=FG, fontsize=13, fontweight="bold", va="top", ha="left")
     fig.text(0.02, 0.93,
-             "Source: eloratings.net · 48 qualified teams for the 2026 World Cup",
+             "romainfjgaspard.github.io/pronostics_wc2026  ·  Elo calculated from all international matches since 1872",
              color=MUTED, fontsize=8.5, va="top", ha="left", alpha=0.85)
 
-    # Artistes par équipe (créés une seule fois)
     team_colors = {t: _team_color(t) for t in top_teams}
-    lines:  dict[str, plt.Line2D] = {}
-    dots:   dict[str, plt.Line2D] = {}
-    lbls:   dict[str, plt.Text]   = {}
+
+    lines:    dict[str, plt.Line2D]             = {}
+    dots:     dict[str, plt.Line2D]             = {}
+    lbls:     dict[str, plt.Text]               = {}
+    flag_ims: dict[str, matplotlib.image.AxesImage] = {}
+
+    OFF_X = x_min - 5000   # position hors champ pour masquer
 
     for team in top_teams:
         c = team_colors[team]
-        line, = ax.plot([], [], color=c, linewidth=2.4, solid_capstyle="round", alpha=0.92, zorder=3)
-        dot,  = ax.plot([], [], "o", color=c, markersize=6, zorder=5)
-        lbl   = ax.text(0, 0, SHORT_NAMES.get(team, team),
-                        color=c, fontsize=9, fontweight="bold",
+        line, = ax.plot([], [], color=c, linewidth=2.0, solid_capstyle="round",
+                        alpha=0.8, zorder=2)
+        dot,  = ax.plot([], [], "o", color=c, markersize=5, zorder=4)
+        lbl   = ax.text(OFF_X, y_min_fixed, SHORT_NAMES.get(team, team),
+                        color=c, fontsize=8.5, fontweight="bold",
                         va="center", ha="left", clip_on=False, zorder=6)
         lines[team] = line
         dots[team]  = dot
         lbls[team]  = lbl
 
+        if team in flag_imgs:
+            fim = ax.imshow(flag_imgs[team], aspect="auto", zorder=5,
+                            extent=[OFF_X, OFF_X + 1, 0, 1],
+                            clip_on=False, interpolation="lanczos")
+            flag_ims[team] = fim
+
     year_txt = ax.text(0.985, 0.06, "", transform=ax.transAxes,
                        ha="right", va="bottom", fontsize=26, fontweight="bold",
-                       color=FG, alpha=0.8, zorder=7)
+                       color=FG, alpha=0.8, zorder=20)
 
     def _style_axes() -> None:
-        ax.set_xlim(x_min - 2, x_max + x_pad)
-        ax.set_ylim(y_min, y_max)
+        ax.set_xlim(x_min - 2, x_max + 1)
+        ax.set_ylim(y_min_fixed, y_max_fixed)
+        ax.autoscale(False)
         ax.set_facecolor(BG)
         ax.tick_params(colors=MUTED, labelsize=9)
         for spine in ax.spines.values():
@@ -216,7 +315,6 @@ def main() -> None:
         ax.set_xlabel("Year", color=MUTED, fontsize=10)
         ax.set_ylabel("Elo Score", color=MUTED, fontsize=10)
         ax.grid(True, color=SURFACE2, linewidth=0.7, linestyle="--", alpha=0.6)
-        # Ligne de référence à 1500 (score initial)
         ax.axhline(1500, color=DIM, linewidth=0.6, linestyle=":", alpha=0.5, zorder=1)
 
     def init():
@@ -224,34 +322,58 @@ def main() -> None:
         for team in top_teams:
             lines[team].set_data([], [])
             dots[team].set_data([], [])
-            lbls[team].set_visible(False)
+            lbls[team].set_position((OFF_X, y_min_fixed))
+            if team in flag_ims:
+                flag_ims[team].set_extent([OFF_X, OFF_X + 1, 0, 1])
         year_txt.set_text("")
-        return [*lines.values(), *dots.values(), *lbls.values(), year_txt]
+        return [*lines.values(), *dots.values(), *lbls.values(),
+                *flag_ims.values(), year_txt]
 
     def update(frame: int):
         x_cur  = xs[frame]
-        x_data = xs[:frame + 1]
+        scores = {team: float(ys[team][frame]) for team in top_teams}
 
-        scores = {team: ys[team][frame] for team in top_teams}
+        # Tri par score courant (z-order)
         by_score = sorted(top_teams, key=lambda t: scores[t], reverse=True)
-        adj_y = _nudge_labels(by_score, scores, y_min, y_max)
+        adj_y    = _nudge_labels(by_score, scores, y_min_fixed, y_max_fixed)
 
-        for team in top_teams:
-            y_data = ys[team][:frame + 1]
-            lines[team].set_data(x_data, y_data)
+        n = len(top_teams)
+        for rank, team in enumerate(by_score):
+            z = n - rank   # plus le score est haut, plus le zorder est élevé
+            lines[team].set_data(xs[:frame + 1], ys[team][:frame + 1])
+            lines[team].set_zorder(z)
             dots[team].set_data([x_cur], [scores[team]])
-            lbls[team].set_position((x_cur + 1.5, adj_y[team]))
-            lbls[team].set_visible(frame > 0)
+            dots[team].set_zorder(z + n)
+
+            if frame > 0:
+                if team in flag_ims:
+                    w_y = flag_w_years[team]
+                    x_f, y_f = x_cur + 0.8, scores[team]
+                    flag_ims[team].set_extent([x_f, x_f + w_y,
+                                               y_f - h_elo_fixed / 2,
+                                               y_f + h_elo_fixed / 2])
+                    flag_ims[team].set_zorder(z + 2 * n)
+                    lbls[team].set_position((x_cur + 0.8 + flag_w_years[team] + 0.2,
+                                             adj_y[team]))
+                    lbls[team].set_zorder(z + 3 * n)
+                else:
+                    lbls[team].set_position((x_cur + 0.8, adj_y[team]))
+                    lbls[team].set_zorder(z + 3 * n)
+            else:
+                lbls[team].set_position((OFF_X, y_min_fixed))
+                if team in flag_ims:
+                    flag_ims[team].set_extent([OFF_X, OFF_X + 1, 0, 1])
 
         year_txt.set_text(f"{int(x_cur)}")
-        return [*lines.values(), *dots.values(), *lbls.values(), year_txt]
+        return [*lines.values(), *dots.values(), *lbls.values(),
+                *flag_ims.values(), year_txt]
 
     anim = FuncAnimation(
         fig, update,
         frames=total_frames,
         init_func=init,
         interval=1000 / FPS,
-        blit=True,
+        blit=False,   # AnnotationBbox requiert blit=False
     )
 
     if test_mode:

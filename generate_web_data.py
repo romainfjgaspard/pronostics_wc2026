@@ -86,6 +86,51 @@ def compute_elo(matches: list) -> dict:
         elo[a] += k * ((1 - sa) - (1 - ea))
     return dict(elo)
 
+def compute_elo_global_history(matches: list) -> dict:
+    """
+    Historique Elo mondial complet : toutes les équipes jamais dans le top 10 mondial,
+    avec leur trajectoire annuelle complète depuis 1872.
+    Retourne un dict compact {'years': [...], 'teams': {name: [elo_par_année]}}.
+    """
+    elo = defaultdict(lambda: 1500.0)
+    yearly_snapshots: dict[int, dict[str, float]] = {}
+    current_year = None
+
+    for m in sorted(matches, key=lambda x: x['date']):
+        year = int(m['date'][:4])
+        if current_year is not None and year != current_year:
+            yearly_snapshots[current_year] = dict(elo)
+        current_year = year
+        h, a = m['home_team'], m['away_team']
+        try:
+            hs, as_ = int(m['home_score']), int(m['away_score'])
+        except (ValueError, TypeError):
+            continue
+        neutral = str(m.get('neutral', 'FALSE')).upper() == 'TRUE'
+        ha = 0 if neutral else 75
+        k  = get_k(m.get('tournament', ''))
+        ea = elo_exp(elo[h] + ha, elo[a])
+        sa = 1.0 if hs > as_ else (0.5 if hs == as_ else 0.0)
+        elo[h] += k * (sa - ea)
+        elo[a] += k * ((1 - sa) - (1 - ea))
+
+    if current_year:
+        yearly_snapshots[current_year] = dict(elo)
+
+    # Identifier les équipes jamais top 10 mondial
+    ever_top10: set[str] = set()
+    for snap in yearly_snapshots.values():
+        for name, _ in sorted(snap.items(), key=lambda x: -x[1])[:10]:
+            ever_top10.add(name)
+
+    years_sorted = sorted(yearly_snapshots.keys())
+    team_histories: dict[str, list[int]] = {
+        team: [round(yearly_snapshots[y].get(team, 1500.0)) for y in years_sorted]
+        for team in sorted(ever_top10)
+    }
+    return {'years': years_sorted, 'teams': team_histories}
+
+
 def compute_elo_history(matches: list, qualified_teams: set) -> list:
     """Retourne les snapshots annuels du classement Elo des équipes qualifiées."""
     elo = defaultdict(lambda: 1500.0)
@@ -352,7 +397,7 @@ def main():
     save_json(groups_out,   os.path.join(WEB_DATA, 'groups.json'))
     save_json(rankings_out, os.path.join(WEB_DATA, 'rankings.json'))
 
-    # Snapshots Elo annuels
+    # Snapshots Elo annuels — 48 équipes qualifiées (pour le site)
     qualified_set = set(t2g.keys())
     elo_history_snapshots = compute_elo_history(history, qualified_set)
     elo_history = {
@@ -361,6 +406,10 @@ def main():
         'snapshots': elo_history_snapshots,
     }
     save_json(elo_history, os.path.join(WEB_DATA, 'elo_ranking_history.json'))
+
+    # Historique Elo mondial — toutes équipes jamais top 10 (pour la vidéo line race)
+    elo_global = compute_elo_global_history(history)
+    save_json(elo_global, os.path.join(WEB_DATA, 'elo_global_history.json'))
 
     print(f"\n✅ Données prêtes dans {WEB_DATA}/")
 
