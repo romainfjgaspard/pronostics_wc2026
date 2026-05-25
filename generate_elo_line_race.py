@@ -286,7 +286,7 @@ def main() -> None:
 
     fig.text(0.02, 0.97, "Elo Score Evolution — Greatest Football Nations 1920–2026",
              color=FG, fontsize=13, fontweight="bold", va="top", ha="left")
-    fig.text(0.02, 0.93,
+    fig.text(0.02, 0.955,
              "romainfjgaspard.github.io/pronostics_wc2026  ·  Elo calculated from all international matches since 1872",
              color=MUTED, fontsize=8.5, va="top", ha="left", alpha=0.85)
 
@@ -364,7 +364,8 @@ def main() -> None:
             dots[team].set_data([x_cur], [scores[team]])
             dots[team].set_zorder(z + n)
 
-            if frame > 0:
+            visible = frame > 0 and scores[team] >= y_min_fixed
+            if visible:
                 if team in flag_ims:
                     w_y = flag_w_years[team]
                     x_f, y_f = x_cur + 0.8, scores[team]
