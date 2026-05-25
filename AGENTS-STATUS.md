@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Phase 10 — Quiz Drapeaux)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9 ✅ P10 ✅
+**Dernière session** : 2026-05-25 (Line Chart Race Elo + ajustements vidéos)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9 ✅ P10 ✅ — Line Race ✅
 
 ---
 
@@ -636,6 +636,51 @@ Pas de feedback après chaque drapeau (ni "correct" ni "faux") — passage immé
 
 ---
 
+### Session 2026-05-25 — Line Chart Race Elo (remplacement BCR Elo)
+
+**Fichiers créés :** `generate_elo_line_race.py`, `data/elo_global_history.json`
+**Fichiers modifiés :** `generate_web_data.py`, `app.js`, `data/elo_line_race.mp4`, `data/fifa_race.mp4`
+
+**Contexte :** Remplacement du bar chart race Elo par une animation FuncAnimation matplotlib — line chart race des 11 plus grandes nations depuis 1920.
+
+**Implémentation `generate_elo_line_race.py` :**
+- `FuncAnimation` (matplotlib) avec `blit=False` (requis pour `ax.imshow` + drapeaux)
+- 11 équipes sélectionnées manuellement (`KEEP_TEAMS`) : Argentina, Belgium, Brazil, England, France, Germany, Italy, Netherlands, Portugal, Spain, Uruguay
+- Drapeaux via `ax.imshow()` + `set_extent()` par frame (AnnotationBbox abandonné — invisible en animation)
+- Lissage gaussien (sigma=2.5) sur les données annuelles avant interpolation
+- Axe Y fixe : 1600–2100 ; `START_YEAR=1920` (avant : toutes les équipes sous 1600 → invisible)
+- Drapeaux et labels masqués (OFF_X) quand score < 1600
+- Z-order dynamique : équipe au score le plus haut affichée devant
+- FPS=24, STEPS_PER_YEAR=8 → 849 frames, 35.4s
+- Sortie : `data/elo_line_race.mp4` (3.8 MB)
+
+**`generate_web_data.py` :**
+- `compute_elo_global_history()` ajoutée : simulation Elo sur tous les matchs, identifie les équipes jamais dans le top 10 mondial, sauvegarde leurs trajectoires complètes
+- `data/elo_global_history.json` : 55 équipes × 155 années (43 KB)
+
+**`app.js` :**
+- Source vidéo Elo : `elo_race.mp4` → `elo_line_race.mp4`
+- Attribut `loop` retiré des deux vidéos (Elo + FIFA) → arrêt sur image finale
+- Lien Wikipédia ajouté dans bloc "Calcul Elo" (page Données) — FR + EN
+
+**`data/fifa_race.mp4` :** régénéré (déjà existant, contenu identique)
+
+**Problèmes résolus :**
+- AnnotationBbox + OffsetImage → invisible en animation → remplacé par `ax.imshow` + `set_extent`
+- Période 1872–1920 : toutes les équipes sous 1600 → invisible → `START_YEAR=1920`
+- `TOP_HIGHLIGHT=10` avec 11 équipes → 1 équipe sans drapeau → condition étendue à toutes
+- Ylim dynamique (progressif) → illisible → axe Y fixe
+- Drapeau restant visible sous 1600 (`clip_on=False`) → masqué dès que score < y_min
+
+**Commits :** `d3f58d6`, `e6f4e85`, `a109d5b`, `5ba1990`, `1cc8e1b`, `f72d902`
+
+**État git :**
+- Branch : master, à jour avec origin/master (dernier push : `f72d902`)
+- Non committés : `data/elo_ranking_history.json`, `data/rankings.json`, `data/teams.json` (régénérés mais non modifiés structurellement — régénération normale à chaque `generate_web_data.py`)
+- Non tracké : `data/elo_line_race_test.gif` (artefact de test, ignorable)
+
+---
+
 ## Plan d'actions — restant (`NOUVEAU_PLAN.md`)
 
 > Remplace l'ancien `PLAN.md`. Détail complet (code exact, lignes à modifier, tests, commits) dans `NOUVEAU_PLAN.md`.
@@ -651,6 +696,7 @@ Pas de feedback après chaque drapeau (ni "correct" ni "faux") — passage immé
 | **T6** | BCR Elo : couleurs maillot domicile (48 équipes), drapeaux locaux w160, fix filter_column_colors | ✅ Fait (2026-05-25) |
 | **T6-FINAL** | Régénération `elo_race.mp4` + `fifa_race.mp4` — couleurs maillot + speed 667ms | ✅ Fait (2026-05-25) |
 | **T7** | Maintenance Python : `elo_utils.py`, nettoyage CSS, `requirements-race.txt` | ⬜ À faire |
+| **Line Race** | `generate_elo_line_race.py` — FuncAnimation, 11 nations, 1920–2026, drapeaux, lissage gaussien | ✅ Fait (2026-05-25) |
 | **P1** | Bandeau nav : logo trophée PNG, icône share SVG, share toujours visible, breakpoints 640→768px + 700→900px, titre bilingue | ✅ Fait (2026-05-25) |
 | **P2** | Bug slider double : `::before` track explicite, `top:0/bottom:0`, tracks natifs transparents, z-index corrigés | ✅ Fait (2026-05-25) |
 | **P3** | Onglet Matchs : `proba-note` retirée de chaque match card, déplacée dans l'en-tête avec lien vers Classement Elo | ✅ Fait (2026-05-25) |
