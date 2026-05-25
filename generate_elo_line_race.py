@@ -162,6 +162,17 @@ def _nudge_labels(
     return result
 
 
+def _gaussian_smooth(arr: list[float], sigma: float = 2.5) -> list[float]:
+    """Lissage gaussien sur les données annuelles (numpy pur, sans scipy)."""
+    a = np.array(arr, dtype=float)
+    radius = int(3 * sigma)
+    x = np.arange(-radius, radius + 1)
+    kernel = np.exp(-x ** 2 / (2 * sigma ** 2))
+    kernel /= kernel.sum()
+    padded = np.pad(a, radius, mode='reflect')
+    return np.convolve(padded, kernel, mode='valid').tolist()
+
+
 def _load_flag(name: str) -> np.ndarray | None:
     iso = TEAM_ISO2.get(name)
     if not iso:
@@ -196,7 +207,7 @@ def main() -> None:
     years_all = data["years"]   # list[int]
     raw_hist  = data["teams"]   # dict[str, list[int]]
 
-    histories = {t: v for t, v in raw_hist.items() if t in KEEP_TEAMS}
+    histories = {t: _gaussian_smooth(v) for t, v in raw_hist.items() if t in KEEP_TEAMS}
     top_teams = sorted(histories.keys())
     print(f"\n  {len(top_teams)} équipes sélectionnées : {', '.join(top_teams)}")
     print(f"  Période : {years_all[0]} → {years_all[-1]}")
@@ -230,7 +241,7 @@ def main() -> None:
     print(f"  {total_frames} frames ({total_frames / FPS:.1f}s à {FPS} fps)")
 
     all_elos   = np.concatenate([ys[t] for t in top_teams])
-    y_min_fixed = 1650.0
+    y_min_fixed = 1600.0
     y_max_fixed = 2100.0
     x_min       = float(years_arr[0])
     x_max       = float(years_arr[-1])

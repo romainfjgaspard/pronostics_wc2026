@@ -1146,7 +1146,7 @@ async function renderRankings() {
         <button class="speed-btn" data-rate="1.5">1.5×</button>
         <button class="speed-btn" data-rate="2">2×</button>
       </div>
-      <video class="elo-race-video" id="elo-race-video" loop muted playsinline controls
+      <video class="elo-race-video" id="elo-race-video" muted playsinline controls
              src="./data/elo_line_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
