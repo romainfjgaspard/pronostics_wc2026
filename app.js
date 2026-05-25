@@ -1293,7 +1293,7 @@ async function renderFifaRankings() {
         <button class="speed-btn" data-rate="1.5">1.5×</button>
         <button class="speed-btn" data-rate="2">2×</button>
       </div>
-      <video class="elo-race-video" id="fifa-race-video" loop muted playsinline controls
+      <video class="elo-race-video" id="fifa-race-video" muted playsinline controls
              src="./data/fifa_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
