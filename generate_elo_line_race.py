@@ -45,6 +45,7 @@ TOP_HIGHLIGHT  = 10   # nb d'équipes avec flags+labels à chaque instant
 STEPS_PER_YEAR = 8
 FPS            = 24
 FLAG_HEIGHT_PX = 11   # hauteur d'affichage des drapeaux en pixels
+START_YEAR     = 1920
 
 # ISO2 pour les drapeaux — équipes WC 2026 + équipes historiques
 TEAM_ISO2: dict[str, str] = {
@@ -209,14 +210,21 @@ def main() -> None:
 
     histories = {t: _gaussian_smooth(v) for t, v in raw_hist.items() if t in KEEP_TEAMS}
     top_teams = sorted(histories.keys())
-    print(f"\n  {len(top_teams)} équipes sélectionnées : {', '.join(top_teams)}")
-    print(f"  Période : {years_all[0]} → {years_all[-1]}")
 
     years_arr = np.array(years_all, dtype=float)
 
     if test_mode:
+        # Test : 50 dernières années
         years_arr = years_arr[-50:]
         histories = {t: histories[t][-50:] for t in top_teams}
+    else:
+        # Production : démarrer à START_YEAR
+        start_idx = next((i for i, y in enumerate(years_all) if y >= START_YEAR), 0)
+        years_arr = years_arr[start_idx:]
+        histories = {t: histories[t][start_idx:] for t in top_teams}
+
+    print(f"\n  {len(top_teams)} équipes sélectionnées : {', '.join(top_teams)}")
+    print(f"  Période : {int(years_arr[0])} → {int(years_arr[-1])}")
 
     n_snap       = len(years_arr)
     n_intervals  = n_snap - 1
@@ -276,7 +284,7 @@ def main() -> None:
     ax = fig.add_axes([0.06, 0.09, 0.88, 0.82])
     ax.set_facecolor(BG)
 
-    fig.text(0.02, 0.97, "Elo Score Evolution — Greatest Football Nations 1872–2026",
+    fig.text(0.02, 0.97, "Elo Score Evolution — Greatest Football Nations 1920–2026",
              color=FG, fontsize=13, fontweight="bold", va="top", ha="left")
     fig.text(0.02, 0.93,
              "romainfjgaspard.github.io/pronostics_wc2026  ·  Elo calculated from all international matches since 1872",
