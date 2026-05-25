@@ -1533,10 +1533,12 @@ function renderQuiz() {
 
     function closeSuggestions() { if (suggests) suggests.innerHTML = ''; }
 
+    function norm(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+
     input?.addEventListener('input', () => {
-      const val = input.value.trim().toLowerCase();
+      const val = norm(input.value.trim());
       if (!val || !suggests) { closeSuggestions(); return; }
-      const hits = allNames.filter(n => n.toLowerCase().startsWith(val)).slice(0, 8);
+      const hits = allNames.filter(n => norm(n).startsWith(val)).slice(0, 8);
       suggests.innerHTML = hits.map(n =>
         `<div class="quiz-suggest-item" data-name="${n}">${n}</div>`
       ).join('');
