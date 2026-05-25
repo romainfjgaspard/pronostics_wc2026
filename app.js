@@ -1516,20 +1516,43 @@ function renderQuiz() {
           <img class="quiz-flag" src="${FLAG_BASE}${tk.iso2}.png" alt="?">
         </div>
         <div class="quiz-input-row">
-          <input type="text" id="quiz-input" class="quiz-input" list="quiz-datalist"
-                 placeholder="${t('quiz_placeholder')}" autocomplete="off">
-          <datalist id="quiz-datalist">
-            ${allNames.map(n => `<option value="${n}">`).join('')}
-          </datalist>
+          <div class="quiz-autocomplete-wrap">
+            <input type="text" id="quiz-input" class="quiz-input"
+                   placeholder="${t('quiz_placeholder')}"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <div class="quiz-suggestions" id="quiz-suggestions"></div>
+          </div>
           <button id="quiz-validate" class="period-btn active">${t('quiz_validate')}</button>
           <button id="quiz-skip" class="period-btn">${t('quiz_skip')}</button>
         </div>
       </div>`;
 
-    const input = app.querySelector('#quiz-input');
+    const input    = app.querySelector('#quiz-input');
+    const suggests = app.querySelector('#quiz-suggestions');
     input?.focus();
 
+    function closeSuggestions() { if (suggests) suggests.innerHTML = ''; }
+
+    input?.addEventListener('input', () => {
+      const val = input.value.trim().toLowerCase();
+      if (!val || !suggests) { closeSuggestions(); return; }
+      const hits = allNames.filter(n => n.toLowerCase().startsWith(val)).slice(0, 8);
+      suggests.innerHTML = hits.map(n =>
+        `<div class="quiz-suggest-item" data-name="${n}">${n}</div>`
+      ).join('');
+    });
+
+    suggests?.addEventListener('mousedown', e => {
+      const item = e.target.closest('.quiz-suggest-item');
+      if (item) { input.value = item.dataset.name; closeSuggestions(); }
+    });
+    suggests?.addEventListener('touchend', e => {
+      const item = e.target.closest('.quiz-suggest-item');
+      if (item) { e.preventDefault(); input.value = item.dataset.name; closeSuggestions(); input.focus(); }
+    });
+
     function validate() {
+      closeSuggestions();
       const answer = input.value.trim();
       const correct = dn(tk.name);
       const isCorrect = answer.toLowerCase() === correct.toLowerCase()
@@ -1542,11 +1565,15 @@ function renderQuiz() {
 
     app.querySelector('#quiz-validate')?.addEventListener('click', validate);
     app.querySelector('#quiz-skip')?.addEventListener('click', () => {
+      closeSuggestions();
       results.push({ name: tk.name, iso2: tk.iso2, correct: false, userAnswer: '' });
       currentIdx++;
       renderCard();
     });
-    input?.addEventListener('keydown', e => { if (e.key === 'Enter') validate(); });
+    input?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') validate();
+      if (e.key === 'Escape') closeSuggestions();
+    });
   }
 
   function renderFinal() {
