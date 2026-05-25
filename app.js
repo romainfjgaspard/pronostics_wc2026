@@ -685,7 +685,7 @@ async function renderTeam(slug) {
   const nouiTeam  = app.querySelector('#noui-team');
   const qualifBtn = app.querySelector('#btn-qualifs-team');
 
-  if (nouiTeam) {
+  if (nouiTeam && typeof noUiSlider !== 'undefined') {
     noUiSlider.create(nouiTeam, {
       start: [teamYearMin, teamYearMax],
       connect: true, step: 1,
@@ -795,7 +795,7 @@ async function renderTeams() {
   const searchInput = app.querySelector('#teams-search');
   let teamsSliderTimer = null;
 
-  if (nouiTeams) {
+  if (nouiTeams && typeof noUiSlider !== 'undefined') {
     noUiSlider.create(nouiTeams, {
       start: [teamsYearMin, teamsYearMax],
       connect: true, step: 1,
@@ -1074,7 +1074,7 @@ async function renderCompare(slug1, slug2) {
   const nouiCmp   = app.querySelector('#noui-cmp');
   const qualBtnCmp = app.querySelector('#btn-qualifs-cmp');
 
-  if (nouiCmp) {
+  if (nouiCmp && typeof noUiSlider !== 'undefined') {
     noUiSlider.create(nouiCmp, {
       start: [cmpYearMin, cmpYearMax],
       connect: true, step: 1,
