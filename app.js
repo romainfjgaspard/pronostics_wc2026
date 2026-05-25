@@ -72,6 +72,16 @@ const I18N = {
     footer_gh_title: 'Code source',
     year_slider_label: (min, max, n) => `De <strong>${min}</strong> à <strong>${max}</strong> — <strong>${n}</strong> match${n > 1 ? 's' : ''}`,
     btn_qualifs_cdm: 'Qualifs CDM 2026',
+    nav_quiz: 'Quiz 🏳️',
+    quiz_h1: 'Quiz Drapeaux',
+    quiz_sub: 'Reconnaissez-vous les 48 drapeaux de la Coupe du Monde 2026 ?',
+    quiz_placeholder: 'Nom du pays…',
+    quiz_validate: 'Valider',
+    quiz_skip: 'Passer',
+    quiz_final_title: (score) => `Score final : ${score}/48`,
+    quiz_share_text: (score) => `J'ai eu ${score}/48 au Quiz Drapeaux CdM 2026 !`,
+    quiz_restart: 'Rejouer',
+    quiz_share: 'Partager mon score',
   },
   en: {
     nav_fixtures: 'Matches',       nav_teams: 'Teams',
@@ -139,6 +149,16 @@ const I18N = {
     footer_gh_title: 'Source code',
     year_slider_label: (min, max, n) => `From <strong>${min}</strong> to <strong>${max}</strong> — <strong>${n}</strong> match${n > 1 ? 'es' : ''}`,
     btn_qualifs_cdm: 'WC 2026 Qualifiers',
+    nav_quiz: 'Quiz 🏳️',
+    quiz_h1: 'Flag Quiz',
+    quiz_sub: 'Do you know all 48 flags from the 2026 World Cup?',
+    quiz_placeholder: 'Country name…',
+    quiz_validate: 'Validate',
+    quiz_skip: 'Skip',
+    quiz_final_title: (score) => `Final score: ${score}/48`,
+    quiz_share_text: (score) => `I scored ${score}/48 on the WC 2026 Flag Quiz!`,
+    quiz_restart: 'Play again',
+    quiz_share: 'Share my score',
   },
 };
 
@@ -351,6 +371,8 @@ async function route() {
     renderFifaRankings();
   } else if (hash === '/data') {
     renderData();
+  } else if (hash === '/quiz') {
+    renderQuiz();
   } else {
     renderFixtures();
   }
@@ -362,6 +384,7 @@ const NAV_PAGES = [
   { hash: '#/fifa-ranking', page: 'fifa-ranking', labelKey: 'nav_fifa' },
   { hash: '#/rankings',     page: 'rankings',     labelKey: 'nav_elo' },
   { hash: '#/data',         page: 'data',         labelKey: 'nav_data' },
+  { hash: '#/quiz',         page: 'quiz',         labelKey: 'nav_quiz' },
 ];
 
 function buildNavSelect() {
@@ -387,6 +410,7 @@ function setActiveNav(hash) {
   else if (hash === '/rankings')      activePage = 'rankings';
   else if (hash === '/fifa-ranking')  activePage = 'fifa-ranking';
   else if (hash === '/data')          activePage = 'data';
+  else if (hash === '/quiz')          activePage = 'quiz';
 
   document.querySelectorAll('.nav-link').forEach(a => {
     a.classList.toggle('active', a.dataset.page === activePage);
@@ -1481,6 +1505,101 @@ function renderData() {
       <h3>${t('sources_h3')}</h3>
       ${sourcesHtml}
     </div>`;
+}
+
+// ── Quiz Drapeaux ─────────────────────────────────────────────────────
+function renderQuiz() {
+  const app = document.getElementById('app');
+  const teams = [...DATA.rankings].sort(() => Math.random() - 0.5);
+  const allNames = DATA.rankings.map(tk => dn(tk.name));
+
+  let currentIdx = 0;
+  let score = 0;
+  const results = [];
+
+  function renderCard() {
+    if (currentIdx >= teams.length) { renderFinal(); return; }
+    const tk = teams[currentIdx];
+    app.innerHTML = `
+      <div class="quiz-wrapper">
+        <div class="quiz-progress">
+          <span>${currentIdx + 1} / ${teams.length}</span>
+          <span>✓ ${score}</span>
+        </div>
+        <div class="quiz-card">
+          <img class="quiz-flag" src="${FLAG_BASE}${tk.iso2}.png" alt="?">
+        </div>
+        <div class="quiz-input-row">
+          <input type="text" id="quiz-input" class="quiz-input" list="quiz-datalist"
+                 placeholder="${t('quiz_placeholder')}" autocomplete="off">
+          <datalist id="quiz-datalist">
+            ${allNames.map(n => `<option value="${n}">`).join('')}
+          </datalist>
+          <button id="quiz-validate" class="period-btn active">${t('quiz_validate')}</button>
+          <button id="quiz-skip" class="period-btn">${t('quiz_skip')}</button>
+        </div>
+      </div>`;
+
+    const input = app.querySelector('#quiz-input');
+    input?.focus();
+
+    function validate() {
+      const answer = input.value.trim();
+      const correct = dn(tk.name);
+      const isCorrect = answer.toLowerCase() === correct.toLowerCase()
+        || answer.toLowerCase() === tk.name.toLowerCase();
+      results.push({ name: tk.name, iso2: tk.iso2, correct: isCorrect, userAnswer: answer });
+      if (isCorrect) score++;
+      currentIdx++;
+      renderCard();
+    }
+
+    app.querySelector('#quiz-validate')?.addEventListener('click', validate);
+    app.querySelector('#quiz-skip')?.addEventListener('click', () => {
+      results.push({ name: tk.name, iso2: tk.iso2, correct: false, userAnswer: '' });
+      currentIdx++;
+      renderCard();
+    });
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') validate(); });
+  }
+
+  function renderFinal() {
+    const url = 'https://romainfjgaspard.github.io/pronostics_wc2026/';
+    const shareText = t('quiz_share_text', score);
+    const wrongOnes = results.filter(r => !r.correct);
+
+    app.innerHTML = `
+      <div class="quiz-wrapper">
+        <div class="quiz-final-score">${t('quiz_final_title', score)}</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:20px 0">
+          <button class="period-btn active" id="quiz-share-btn">${t('quiz_share')}</button>
+          <button class="period-btn" onclick="location.hash='#/quiz'">${t('quiz_restart')}</button>
+        </div>
+        ${wrongOnes.length ? `
+          <h3 style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">
+            ${LANG === 'fr' ? 'À retenir' : 'Missed'}
+          </h3>
+          <div class="quiz-results-grid">
+            ${wrongOnes.map(r => `
+              <div class="quiz-result-item">
+                ${flagImg(r.iso2, r.name, 'quiz-result-flag')}
+                <span>${dn(r.name)}</span>
+              </div>`).join('')}
+          </div>` : ''}
+      </div>`;
+
+    app.querySelector('#quiz-share-btn')?.addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({ title: 'Quiz Drapeaux WC 2026', text: shareText, url });
+      } else {
+        navigator.clipboard.writeText(`${shareText} ${url}`);
+        const btn = app.querySelector('#quiz-share-btn');
+        if (btn) { btn.textContent = '✓ Copié !'; setTimeout(() => btn.textContent = t('quiz_share'), 2000); }
+      }
+    });
+  }
+
+  renderCard();
 }
 
 // ── Share ─────────────────────────────────────────────────────────────
