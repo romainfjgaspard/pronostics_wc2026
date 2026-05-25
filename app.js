@@ -79,7 +79,7 @@ const I18N = {
     quiz_validate: 'Valider',
     quiz_skip: 'Passer',
     quiz_final_title: (score) => `Score final : ${score}/48`,
-    quiz_share_text: (score) => `J'ai eu ${score}/48 au Quiz Drapeaux CdM 2026 !`,
+    quiz_share_text: (score) => `J'ai eu ${score}/48 au Quiz Drapeaux CdM 2026 ! Et toi ?`,
     quiz_restart: 'Rejouer',
     quiz_share: 'Partager mon score',
   },
@@ -156,7 +156,7 @@ const I18N = {
     quiz_validate: 'Validate',
     quiz_skip: 'Skip',
     quiz_final_title: (score) => `Final score: ${score}/48`,
-    quiz_share_text: (score) => `I scored ${score}/48 on the WC 2026 Flag Quiz!`,
+    quiz_share_text: (score) => `I scored ${score}/48 on the WC 2026 Flag Quiz! What about you?`,
     quiz_restart: 'Play again',
     quiz_share: 'Share my score',
   },
@@ -511,7 +511,7 @@ function filterMatchesByYears(matches, minYear, maxYear) {
 
 function filterMatchesQualifs(matches) {
   return matches.filter(m =>
-    m.tournament && m.tournament.toLowerCase().includes('qualification')
+    m.tournament === 'FIFA World Cup qualification'
   );
 }
 
@@ -1182,11 +1182,14 @@ async function renderRankings() {
         <button class="speed-btn" data-rate="1.5">1.5×</button>
         <button class="speed-btn" data-rate="2">2×</button>
       </div>
-      <video class="elo-race-video" id="elo-race-video" autoplay loop muted playsinline controls
+      <video class="elo-race-video" id="elo-race-video" loop muted playsinline controls
              src="./data/elo_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
     </div>
+    <h2 style="font-size:1.3rem;font-weight:700;margin-top:40px;margin-bottom:12px">
+      ${LANG === 'fr' ? 'Détail du classement' : 'Ranking Detail'}
+    </h2>
     <div class="fifa-controls">
       <label class="fifa-year-label" for="elo-year-slider">
         ${LANG === 'fr' ? 'Année' : 'Year'} :
@@ -1326,11 +1329,14 @@ async function renderFifaRankings() {
         <button class="speed-btn" data-rate="1.5">1.5×</button>
         <button class="speed-btn" data-rate="2">2×</button>
       </div>
-      <video class="elo-race-video" id="fifa-race-video" autoplay loop muted playsinline controls
+      <video class="elo-race-video" id="fifa-race-video" loop muted playsinline controls
              src="./data/fifa_race.mp4"
              onerror="this.closest('.race-section').style.display='none'">
       </video>
     </div>
+    <h2 style="font-size:1.3rem;font-weight:700;margin-top:40px;margin-bottom:12px">
+      ${LANG === 'fr' ? 'Détail du classement' : 'Ranking Detail'}
+    </h2>
     <div class="fifa-controls">
       <label class="fifa-year-label" for="fifa-year-slider">
         ${LANG === 'fr' ? 'Année' : 'Year'} :
@@ -1445,19 +1451,6 @@ function renderData() {
         repo is kept as fallback only: <strong>abandoned since January 2021</strong>,
         December 2020 data (Belgium #1, 1,780 pts).
       </li>
-      <li>
-        <strong>Elo Score</strong>: custom calculation — not available in public datasets.
-        K-factors WC×60 · tournaments×50 · qualifiers×35 · friendlies×20 ·
-        home advantage +75 (neutralized on neutral ground) · initial score 1,500.
-      </li>
-      <li>
-        <strong>Elo Score — detailed methodology</strong>:
-        ranking system adapted to football, calculated from all 49,329 matches since 1872.
-        Each team starts at <strong>1,500 pts</strong>. After each match, points are exchanged
-        based on the result and the Elo gap.
-        <br>K-factors: FIFA World Cup ×60 · Euro/Copa/AFCON/Asia ×50 · Qualifiers/Nations League ×35 · Friendlies ×20.
-        <br>Home advantage: +75 pts (cancelled on neutral ground). Initial score: 1,500 per team.
-      </li>
     </ul>
   ` : `
     <ul>
@@ -1477,18 +1470,43 @@ function renderData() {
         est conservé en fallback uniquement : <strong>abandonné depuis janvier 2021</strong>,
         données de décembre 2020 (Belgique #1, 1 780 pts).
       </li>
+    </ul>
+  `;
+
+  const eloMethodHtml = LANG === 'en' ? `
+    <ul>
       <li>
-        <strong>Score Elo</strong> : calcul maison — absent des sources publiques.
-        K-facteurs WC×60 · tournois×50 · qualifs×35 · amicaux×20 ·
-        avantage terrain +75 (neutralisé sur terrain neutre) · score initial 1 500.
+        Ranking system adapted to football, calculated from all <strong>49,329 matches since 1872</strong>.
+        Each team starts at <strong>1,500 pts</strong>. After each match, points are exchanged
+        based on the result and the Elo gap between the two teams.
       </li>
       <li>
-        <strong>Score Elo — méthodologie détaillée</strong> :
-        système de classement adapté au football, calculé sur l'ensemble des 49 329 matchs depuis 1872.
+        <strong>K-factors</strong>: FIFA World Cup ×60 · Euro/Copa América/AFCON/Asia Cup ×50 ·
+        Qualifiers / Nations League ×35 · Friendlies ×20.
+      </li>
+      <li>
+        <strong>Home advantage</strong>: +75 pts added to the home team's expected score (cancelled on neutral ground).
+      </li>
+      <li>
+        <strong>Initial score</strong>: 1,500 pts per team.
+      </li>
+    </ul>
+  ` : `
+    <ul>
+      <li>
+        Système de classement adapté au football, calculé sur l'ensemble des <strong>49 329 matchs depuis 1872</strong>.
         Chaque équipe démarre à <strong>1 500 pts</strong>. Après chaque match, les points sont échangés
-        selon le résultat et l'écart Elo.
-        <br>K-facteurs : Coupe du Monde ×60 · Euro/Copa/CAN/Asie ×50 · Qualifs/Nations League ×35 · Amicaux ×20.
-        <br>Avantage domicile : +75 pts (annulé sur terrain neutre). Score initial : 1 500 par équipe.
+        selon le résultat et l'écart Elo entre les deux équipes.
+      </li>
+      <li>
+        <strong>K-facteurs</strong> : Coupe du Monde ×60 · Euro/Copa América/CAN/Coupe d'Asie ×50 ·
+        Qualifications / Nations League ×35 · Amicaux ×20.
+      </li>
+      <li>
+        <strong>Avantage domicile</strong> : +75 pts ajoutés au score attendu de l'équipe à domicile (annulé sur terrain neutre).
+      </li>
+      <li>
+        <strong>Score initial</strong> : 1 500 pts par équipe.
       </li>
     </ul>
   `;
@@ -1504,6 +1522,11 @@ function renderData() {
     <div class="source-section">
       <h3>${t('sources_h3')}</h3>
       ${sourcesHtml}
+    </div>
+
+    <div class="source-section" style="margin-top:16px">
+      <h3>${LANG === 'fr' ? 'Calcul Elo' : 'Elo Calculation'}</h3>
+      ${eloMethodHtml}
     </div>`;
 }
 
@@ -1524,7 +1547,6 @@ function renderQuiz() {
       <div class="quiz-wrapper">
         <div class="quiz-progress">
           <span>${currentIdx + 1} / ${teams.length}</span>
-          <span>✓ ${score}</span>
         </div>
         <div class="quiz-card">
           <img class="quiz-flag" src="${FLAG_BASE}${tk.iso2}.png" alt="?">
@@ -1589,10 +1611,11 @@ function renderQuiz() {
       </div>`;
 
     app.querySelector('#quiz-share-btn')?.addEventListener('click', () => {
+      const fullText = `${shareText}\n${url}`;
       if (navigator.share) {
-        navigator.share({ title: 'Quiz Drapeaux WC 2026', text: shareText, url });
+        navigator.share({ text: fullText });
       } else {
-        navigator.clipboard.writeText(`${shareText} ${url}`);
+        navigator.clipboard.writeText(fullText);
         const btn = app.querySelector('#quiz-share-btn');
         if (btn) { btn.textContent = '✓ Copié !'; setTimeout(() => btn.textContent = t('quiz_share'), 2000); }
       }
