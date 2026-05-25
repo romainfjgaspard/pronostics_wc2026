@@ -7,8 +7,8 @@ Site de **données** pour la Coupe du Monde 2026 : historique des équipes, matc
 **Repo** : https://github.com/romainfjgaspard/pronostics_wc2026
 **Site** : https://romainfjgaspard.github.io/pronostics_wc2026/
 
-**Dernière session** : 2026-05-25 (Corrections UI/UX — Phase 9 : README mise à jour)
-**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9 ✅ P10 à faire (PLAN_CORRECTIONS.md)
+**Dernière session** : 2026-05-25 (Phase 10 — Quiz Drapeaux)
+**État** : T0 ✅ T1 ✅ T2 ✅ T3 ✅ T4 ✅ T5 ✅ T6 ✅ T6-FINAL ✅ — T7 à faire — P1 ✅ P2 ✅ P3 ✅ P4 ✅ P5 ✅ P6 ✅ P7 ✅ P8 ✅ P9 ✅ P10 ✅
 
 ---
 
@@ -612,6 +612,30 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 
 ---
 
+### Session 2026-05-25 — Phase 10 : Quiz Drapeaux
+
+**Fichiers modifiés :** `index.html`, `app.js`, `style.css`
+
+**Comportement choisi (modification du plan initial) :**
+Pas de feedback après chaque drapeau (ni "correct" ni "faux") — passage immédiat au suivant. Résultats uniquement en page finale.
+
+**10.1 — Onglet Quiz :**
+- `index.html` : `<a href="#/quiz" ...>Quiz</a>` ajouté dans `.nav-links`
+- `app.js` : `NAV_PAGES` + `route()` + `setActiveNav()` mis à jour
+
+**10.2 — renderQuiz() :**
+- 48 équipes mélangées aléatoirement depuis `DATA.rankings`
+- Datalist autocomplete avec tous les noms en langue active
+- Valider / Passer → passage immédiat au drapeau suivant (pas de délai, pas de message)
+- `results[]` trace correct/incorrect pour la page finale
+- Page finale : score /48, grille des drapeaux ratés (`.quiz-results-grid`), bouton partage (`navigator.share` ou clipboard)
+
+**10.3 — CSS :** `.quiz-wrapper`, `.quiz-progress`, `.quiz-card`, `.quiz-flag`, `.quiz-input-row`, `.quiz-input`, `.quiz-final-score`, `.quiz-results-grid`, `.quiz-result-item`, `.quiz-result-flag`
+
+**Commit :** `25750cb`
+
+---
+
 ## Plan d'actions — restant (`NOUVEAU_PLAN.md`)
 
 > Remplace l'ancien `PLAN.md`. Détail complet (code exact, lignes à modifier, tests, commits) dans `NOUVEAU_PLAN.md`.
@@ -636,4 +660,4 @@ Fichiers exclus du repo (trop lourds, non utilisés par le site) :
 | **P7** | Données : suppression infoBanner, descriptions "depuis 1872", section méthodologie Elo détaillée | ✅ Fait (2026-05-25) |
 | **P8** | Drapeaux w320, slider+bouton en ligne, badge FIFA rank, forme droite alignée | ✅ Fait (2026-05-25) |
 | **P9** | README : 6 corrections (1872, 49 329 matchs, elo_ranking_history.json) | ✅ Fait (2026-05-25) |
-| **P10** | Quiz Drapeaux — voir `PLAN_CORRECTIONS.md` | ⬜ À faire |
+| **P10** | Quiz Drapeaux : 48 drapeaux, input autocomplete, résultat uniquement en fin | ✅ Fait (2026-05-25, commit `25750cb`) |
