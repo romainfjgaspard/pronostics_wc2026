@@ -286,7 +286,7 @@ def main() -> None:
 
     fig.text(0.02, 0.97, "Elo Score Evolution — Greatest Football Nations 1920–2026",
              color=FG, fontsize=13, fontweight="bold", va="top", ha="left")
-    fig.text(0.02, 0.955,
+    fig.text(0.02, 0.945,
              "romainfjgaspard.github.io/pronostics_wc2026  ·  Elo calculated from all international matches since 1872",
              color=MUTED, fontsize=8.5, va="top", ha="left", alpha=0.85)
 
