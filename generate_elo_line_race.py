@@ -408,7 +408,7 @@ def main() -> None:
         print(f"\n⬡ Génération MP4 complète ({total_frames} frames)…")
         writer = FFMpegWriter(
             fps=FPS, bitrate=2500, codec="libx264",
-            extra_args=["-pix_fmt", "yuv420p"],
+            extra_args=["-pix_fmt", "yuv420p", "-movflags", "+faststart"],
         )
         anim.save(str(output), writer=writer, dpi=dpi)
         size_mb = output.stat().st_size / 1024 / 1024
