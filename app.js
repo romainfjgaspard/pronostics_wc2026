@@ -543,9 +543,13 @@ function renderFixtures() {
     const matchesHtml = matches.map(m => {
       const s1 = encodeURIComponent(slugify(m.home));
       const s2 = encodeURIComponent(slugify(m.away));
+      const played = m.played || (m.home_score != null && m.away_score != null);
+      const centerHtml = played
+        ? `<div class="match-score">${m.home_score} – ${m.away_score}</div>`
+        : `<div class="match-vs">vs</div>`;
       let probaHtml = '';
       const p = m.proba;
-      if (p) {
+      if (!played && p) {
         const titleFr = `Indicateur Elo — ${dn(m.home)} ${(p.home*100).toFixed(0)}% / Nul ${(p.draw*100).toFixed(0)}% / ${dn(m.away)} ${(p.away*100).toFixed(0)}%`;
         const titleEn = `Elo indicator — ${dn(m.home)} ${(p.home*100).toFixed(0)}% / Draw ${(p.draw*100).toFixed(0)}% / ${dn(m.away)} ${(p.away*100).toFixed(0)}%`;
         probaHtml = `
@@ -557,14 +561,14 @@ function renderFixtures() {
           `;
       }
       return `
-        <div class="match-card match-card-link" onclick="location.hash='#/compare/${s1}/${s2}'">
+        <div class="match-card match-card-link ${played ? 'match-card-played' : ''}" onclick="location.hash='#/compare/${s1}/${s2}'">
           <div class="match-date">${formatDate(m.date)}${m.city ? ' · ' + m.city : ''}</div>
           <div class="match-teams">
             <div class="match-team home">
               <span>${dn(m.home)}</span>
               ${flagImg(m.home_iso2, m.home, 'flag-sm')}
             </div>
-            <div class="match-vs">vs</div>
+            ${centerHtml}
             <div class="match-team away">
               ${flagImg(m.away_iso2, m.away, 'flag-sm')}
               <span>${dn(m.away)}</span>

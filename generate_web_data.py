@@ -298,8 +298,11 @@ def main():
         key=lambda x: x['date']
     )
     history = [r for r in results
-               if not (r['tournament'] == 'FIFA World Cup' and r['date'] >= '2026-06-01')]
-    print(f"  {len(wc26)} fixtures WC 2026 | {len(history)} matchs historiques")
+               if not (r['tournament'] == 'FIFA World Cup'
+                       and r['date'] >= '2026-06-01'
+                       and r['home_score'] in ('NA', '', None))]
+    played_wc = sum(1 for r in wc26 if r['home_score'] not in ('NA', '', None))
+    print(f"  {len(wc26)} fixtures WC 2026 ({played_wc} joués) | {len(history)} matchs historiques")
 
     print("\n[2/5] Étiquetage des phases...")
     # WC 2026 : 12 groupes de 4 équipes, 72 matchs tous en phase de groupes.
@@ -334,11 +337,18 @@ def main():
         grp = t2g.get(h) or t2g.get(a) or '?'
         elo_h = elo.get(h, 1500)
         elo_a = elo.get(a, 1500)
+        hs_raw, as_raw = f.get('home_score'), f.get('away_score')
+        try:
+            hs_int, as_int = int(hs_raw), int(as_raw)
+        except (TypeError, ValueError):
+            hs_int = as_int = None
         fixtures_out.append({
             'date':f['date'], 'stage':f['_stage'], 'stage_label':STAGE_NAMES.get(f['_stage'],''),
             'group':grp, 'home':h, 'away':a,
             'home_iso2':TEAM_ISO2.get(h,''), 'away_iso2':TEAM_ISO2.get(a,''),
             'home_elo':round(elo_h, 0), 'away_elo':round(elo_a, 0),
+            'home_score': hs_int, 'away_score': as_int,
+            'played': hs_int is not None,
             'city':f.get('city',''),
             'proba': elo_prob(elo_h, elo_a),
         })
