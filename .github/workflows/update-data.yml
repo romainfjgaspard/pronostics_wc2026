@@ -1,8 +1,11 @@
 name: Update data
 on:
   schedule:
-    - cron: '0 7 * * 1'   # chaque lundi à 7h UTC (passer à '0 7 * * *' pendant la CDM 12 juin–19 juillet)
-  workflow_dispatch:        # déclenchement manuel possible
+    - cron: '0 6,22 * * *'   # 6h et 22h UTC (8h et minuit Paris) — 2×/jour pendant la CDM 12 juin–19 juillet 2026
+  workflow_dispatch:           # déclenchement manuel possible
+
+permissions:
+  contents: write              # autorise le push depuis github-actions[bot]
 
 jobs:
   update:
@@ -32,5 +35,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/
-          git diff --staged --quiet || git commit -m "chore: mise à jour données $(date +%Y-%m-%d)"
+          git diff --staged --quiet && echo "Aucun changement" && exit 0
+          git commit -m "chore: mise à jour données $(date -u +%Y-%m-%d_%HhUTC)"
+          git pull --rebase origin master
           git push
